@@ -1,16 +1,19 @@
-import type { VehicleJob } from '../model';
+import type { RoleId, VehicleJob } from '../model';
 import {
   LINE_STATUS_LABEL,
   approvalSummary,
   inspectionSummary,
   partsSummary,
   repairCompletionSummary,
+  roleHideAdvisorLineActions,
+  roleHideTechLineActions,
   vehicleLabel,
 } from '../model';
 
 interface Props {
   job: VehicleJob;
   simMin: number;
+  role?: RoleId;
   onClose: () => void;
   onMarkInspectionComplete: () => void;
   onApproveAllPending: () => void;
@@ -23,6 +26,7 @@ interface Props {
 export function JobDetail({
   job,
   simMin,
+  role = 'full',
   onClose,
   onMarkInspectionComplete,
   onApproveAllPending,
@@ -36,6 +40,8 @@ export function JobDetail({
     (l) => l.status === 'pending_approval' || l.status === 'proposed',
   ).length;
   const floor = Math.floor(simMin);
+  const hideAdvisor = roleHideAdvisorLineActions(role);
+  const hideTech = roleHideTechLineActions(role);
 
   return (
     <section
@@ -84,16 +90,27 @@ export function JobDetail({
         {job.inspectionStatus !== 'complete' && (
           <button
             type="button"
-            className="btn btn--sm btn--primary"
+            className={`btn btn--sm ${
+              hideTech ? 'btn--ghost movebar__secondary' : 'btn--primary'
+            }`}
             onClick={onMarkInspectionComplete}
+            title={
+              hideTech
+                ? 'Usually a tech action — still available'
+                : undefined
+            }
           >
             Mark inspection complete
           </button>
         )}
-        {pendingCount > 0 && (
+        {pendingCount > 0 && !hideAdvisor && (
           <button
             type="button"
-            className="btn btn--sm btn--ok"
+            className={`btn btn--sm ${
+              role === 'advisor' || role === 'full' || role === 'manager'
+                ? 'btn--ok'
+                : 'btn--ghost'
+            }`}
             onClick={onApproveAllPending}
           >
             Approve all pending ({pendingCount})
@@ -154,7 +171,7 @@ export function JobDetail({
                   )}
                 </div>
                 <div className="job-line__actions">
-                  {canApprove && (
+                  {canApprove && !hideAdvisor && (
                     <button
                       type="button"
                       className="btn btn--sm btn--ok"
@@ -173,16 +190,19 @@ export function JobDetail({
                       Mark parts ordered (+30m)
                     </button>
                   )}
-                  {canStartRepair && onMarkLineInRepair && line.status !== 'in_repair' && (
-                    <button
-                      type="button"
-                      className="btn btn--sm btn--ghost"
-                      onClick={() => onMarkLineInRepair(line.id)}
-                    >
-                      Start repair
-                    </button>
-                  )}
-                  {canDone && (
+                  {canStartRepair &&
+                    onMarkLineInRepair &&
+                    line.status !== 'in_repair' &&
+                    !hideTech && (
+                      <button
+                        type="button"
+                        className="btn btn--sm btn--ghost"
+                        onClick={() => onMarkLineInRepair(line.id)}
+                      >
+                        Start repair
+                      </button>
+                    )}
+                  {canDone && !hideTech && (
                     <button
                       type="button"
                       className="btn btn--sm btn--warn"

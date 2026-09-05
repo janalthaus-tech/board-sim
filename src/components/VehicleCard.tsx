@@ -1,4 +1,4 @@
-import type { BoardColumnId, JobMarker, VehicleJob } from '../model';
+import type { BoardColumnId, JobMarker, RoleId, VehicleJob } from '../model';
 import {
   vehicleLabel,
   BOARD_COLUMNS,
@@ -8,13 +8,16 @@ import {
   inspectionChipLabel,
   partsChipLabel,
   repairChipLabel,
+  roleDeemphasizeAdvisorActions,
 } from '../model';
 
 interface Props {
   job: VehicleJob;
   selected: boolean;
   highlight?: boolean;
+  dimmed?: boolean;
   simMin?: number;
+  repairDetailEnabled?: boolean;
   onSelect: (id: string) => void;
   onDragStart: (id: string) => void;
 }
@@ -34,7 +37,9 @@ export function VehicleCard({
   job,
   selected,
   highlight,
+  dimmed,
   simMin = 0,
+  repairDetailEnabled = false,
   onSelect,
   onDragStart,
 }: Props) {
@@ -43,14 +48,14 @@ export function VehicleCard({
   const isHeart = markers.includes('H');
   const timerCritical =
     isWaiter && job.waiterTimerMin != null && job.waiterTimerMin <= 5;
-  const inspChip = inspectionChipLabel(job);
-  const apprChip = approvalChipLabel(job);
-  const partsChip = partsChipLabel(job, simMin);
-  const repairChip = repairChipLabel(job);
+  const inspChip = repairDetailEnabled ? inspectionChipLabel(job) : null;
+  const apprChip = repairDetailEnabled ? approvalChipLabel(job) : null;
+  const partsChip = repairDetailEnabled ? partsChipLabel(job, simMin) : null;
+  const repairChip = repairDetailEnabled ? repairChipLabel(job) : null;
 
   return (
     <article
-      className={`card ${selected ? 'card--selected' : ''} ${job.flags.includes('urgent') ? 'card--urgent' : ''} ${job.flags.includes('blocked') ? 'card--blocked' : ''} ${isWaiter ? 'card--waiter' : ''} ${isHeart ? 'card--heart' : ''} ${job.lateAnswer ? 'card--late-answer' : ''} ${highlight ? 'card--next-important' : ''} ${job.promisedToday ? 'card--promised' : ''}`}
+      className={`card ${selected ? 'card--selected' : ''} ${job.flags.includes('urgent') ? 'card--urgent' : ''} ${job.flags.includes('blocked') ? 'card--blocked' : ''} ${isWaiter ? 'card--waiter' : ''} ${isHeart ? 'card--heart' : ''} ${job.lateAnswer ? 'card--late-answer' : ''} ${highlight ? 'card--next-important' : ''} ${job.promisedToday ? 'card--promised' : ''} ${dimmed ? 'card--dimmed' : ''}`}
       data-demo={isWaiter && job.waiterTimerMin != null ? 'waiter' : undefined}
       draggable
       onDragStart={(e) => {
@@ -130,30 +135,31 @@ export function VehicleCard({
           </span>
         )}
       </div>
-      {(inspChip || apprChip || partsChip || repairChip) && (
-        <div className="card__repair-chips" data-demo="repair-chips">
-          {inspChip && (
-            <span className="chip chip--insp" title="Inspection status">
-              {inspChip}
-            </span>
-          )}
-          {apprChip && (
-            <span className="chip chip--appr" title="Approved / total lines">
-              {apprChip}
-            </span>
-          )}
-          {partsChip && (
-            <span className="chip chip--parts-eta" title="Parts availability">
-              {partsChip}
-            </span>
-          )}
-          {repairChip && (
-            <span className="chip chip--repair" title="Repair progress">
-              {repairChip}
-            </span>
-          )}
-        </div>
-      )}
+      {repairDetailEnabled &&
+        (inspChip || apprChip || partsChip || repairChip) && (
+          <div className="card__repair-chips" data-demo="repair-chips">
+            {inspChip && (
+              <span className="chip chip--insp" title="Inspection status">
+                {inspChip}
+              </span>
+            )}
+            {apprChip && (
+              <span className="chip chip--appr" title="Approved / total lines">
+                {apprChip}
+              </span>
+            )}
+            {partsChip && (
+              <span className="chip chip--parts-eta" title="Parts availability">
+                {partsChip}
+              </span>
+            )}
+            {repairChip && (
+              <span className="chip chip--repair" title="Repair progress">
+                {repairChip}
+              </span>
+            )}
+          </div>
+        )}
       {job.flags.length > 0 && (
         <div className="card__flags">
           {job.flags.map((f) => (
@@ -169,6 +175,7 @@ export function VehicleCard({
 
 interface MoveBarProps {
   job: VehicleJob | undefined;
+  role?: RoleId;
   onMove: (column: BoardColumnId) => void;
   onClearSelection: () => void;
   onClearBlocker: () => void;
@@ -177,6 +184,7 @@ interface MoveBarProps {
 
 export function MoveBar({
   job,
+  role = 'full',
   onMove,
   onClearSelection,
   onClearBlocker,
@@ -190,6 +198,8 @@ export function MoveBar({
     );
   }
   const canDeliverAnswer = job.answerDeliveredAtSimMin == null && job.column !== 'final';
+  const answerSecondary = roleDeemphasizeAdvisorActions(role);
+  const answerPrimary = role === 'advisor';
   return (
     <div className="movebar" role="region" aria-label="Move selected vehicle" data-demo="movebar">
       <div className="movebar__info">
@@ -229,7 +239,13 @@ export function MoveBar({
         {canDeliverAnswer && onAnswerDelivered && (
           <button
             type="button"
-            className="btn btn--sm btn--ok"
+            className={`btn btn--sm ${
+              answerSecondary
+                ? 'btn--ghost movebar__secondary'
+                : answerPrimary
+                  ? 'btn--ok'
+                  : 'btn--ok'
+            }`}
             onClick={onAnswerDelivered}
             title="Mark customer answer delivered (1-hour clock)"
           >

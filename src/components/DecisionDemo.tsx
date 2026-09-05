@@ -20,6 +20,8 @@ interface DemoStep {
   body: string;
   /** Prefer selecting a waiter card so MoveBar / timer are visible */
   selectWaiter?: boolean;
+  /** Needs repair detail UI visible — demo will temporarily enable if off */
+  needsDetail?: boolean;
 }
 
 const STEPS: DemoStep[] = [
@@ -67,14 +69,16 @@ const STEPS: DemoStep[] = [
   {
     target: 'repair-chips',
     title: 'Inspection → approval → parts → repair',
-    body: 'Card chips answer the four shop questions: Is inspection done? What did the customer approve? Are parts available (and when)? Is the repair complete?',
+    body: 'Card chips answer the four shop questions: Is inspection done? What did the customer approve? Are parts available (and when)? Is the repair complete? (Repair detail is turned on for this step if it was off.)',
     selectWaiter: true,
+    needsDetail: true,
   },
   {
     target: 'job-detail',
     title: 'Open a card for line-level detail',
     body: 'The detail sheet shows proposed lines, approvals, parts ETAs, and completion times. Training actions let you mark inspection complete, approve, order parts, or finish a line.',
     selectWaiter: true,
+    needsDetail: true,
   },
   {
     target: 'movebar',
@@ -98,6 +102,9 @@ interface SpotlightRect {
 
 interface Props {
   open: boolean;
+  repairDetailEnabled?: boolean;
+  /** Temporarily turn detail on so demo steps that need chips/sheet can spotlight them */
+  onEnsureRepairDetail?: () => void;
   onSelectWaiter?: () => void;
   onFinishPlay: () => void;
   onFinishHome: () => void;
@@ -123,6 +130,8 @@ function measure(el: Element | null): SpotlightRect | null {
 
 export function DecisionDemo({
   open,
+  repairDetailEnabled = false,
+  onEnsureRepairDetail,
   onSelectWaiter,
   onFinishPlay,
   onFinishHome,
@@ -153,6 +162,19 @@ export function DecisionDemo({
     onSelectWaiter?.();
   }, [open, done, step, current?.selectWaiter, onSelectWaiter]);
 
+  // Temporarily enable repair detail for chip / sheet steps
+  useEffect(() => {
+    if (!open || done || !current?.needsDetail) return;
+    if (!repairDetailEnabled) onEnsureRepairDetail?.();
+  }, [
+    open,
+    done,
+    step,
+    current?.needsDetail,
+    repairDetailEnabled,
+    onEnsureRepairDetail,
+  ]);
+
   useLayoutEffect(() => {
     if (!open || done) {
       setSpot(null);
@@ -178,7 +200,6 @@ export function DecisionDemo({
     };
 
     update();
-    // Retry after layout (compact HUD expand / MoveBar select)
     const t1 = window.setTimeout(update, 80);
     const t2 = window.setTimeout(update, 220);
     const onResize = () => update();
@@ -191,7 +212,7 @@ export function DecisionDemo({
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onResize, true);
     };
-  }, [open, done, step, current?.target]);
+  }, [open, done, step, current?.target, repairDetailEnabled]);
 
   if (!open) return null;
 

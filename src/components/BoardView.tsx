@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { BoardColumnId, BoardState, FiredEventLog, Scenario, SpeedMul } from '../model';
+import type {
+  BoardColumnId,
+  BoardState,
+  FiredEventLog,
+  RoleId,
+  Scenario,
+  SpeedMul,
+} from '../model';
 import {
   BOARD_COLUMNS,
   COLUMN_LABELS,
+  ROLE_OPTIONS,
   SPEED_MUL_OPTIONS,
   SPEED_ZONE_COLUMNS,
   SOLD_COLUMNS,
@@ -13,6 +21,8 @@ import {
   jobsInColumn,
   nextMostImportant,
   partsWipHours,
+  roleCoachCue,
+  roleShortLabel,
   techHoursProgress,
   totalFlagHours,
 } from '../model';
@@ -49,6 +59,10 @@ interface Props {
   demoMode?: boolean;
   speedMul: SpeedMul;
   onSpeedMul: (mul: SpeedMul) => void;
+  repairDetailEnabled: boolean;
+  role: RoleId;
+  onToggleRepairDetail?: (next: boolean) => void;
+  onChangeRole?: (role: RoleId) => void;
 }
 
 function useMediaQuery(query: string): boolean {
@@ -94,6 +108,10 @@ export function BoardView({
   demoMode = false,
   speedMul,
   onSpeedMul,
+  repairDetailEnabled,
+  role,
+  onToggleRepairDetail,
+  onChangeRole,
 }: Props) {
   const selected = useMemo(
     () => board.jobs.find((j) => j.id === selectedId),
@@ -160,6 +178,12 @@ export function BoardView({
   const showFullHud =
     demoMode || !compactHudMode || (hudExpanded && !landscapeShort);
 
+  const emphasizeManager =
+    role === 'manager' || role === 'full';
+  const emphasizeAdvisor = role === 'advisor';
+  const emphasizeTech = role === 'technician';
+  const coachCue = roleCoachCue(role);
+
   useEffect(() => {
     if (!toast || demoMode) return;
     const t = window.setTimeout(() => onDismissToast(), 4200);
@@ -167,7 +191,7 @@ export function BoardView({
   }, [toast, onDismissToast, demoMode]);
 
   return (
-    <div className="board-screen">
+    <div className={`board-screen board-screen--role-${role}`}>
       <header className="topbar">
         <div className="topbar__left">
           <button type="button" className="btn btn--ghost btn--sm" onClick={onHome}>
@@ -177,6 +201,17 @@ export function BoardView({
             <p className="eyebrow">Board Sim</p>
             <h1 className="topbar__title">{scenario.title}</h1>
           </div>
+          <span
+            className={`role-badge role-badge--${role}`}
+            title={`Role: ${roleShortLabel(role)}`}
+          >
+            {roleShortLabel(role)}
+          </span>
+          {repairDetailEnabled && (
+            <span className="role-badge role-badge--detail" title="Repair & approval detail on">
+              Detail
+            </span>
+          )}
         </div>
         <div className="topbar__clock" aria-live="polite">
           <span className="clock__time">{formatSimClock(simMin)}</span>
@@ -245,7 +280,9 @@ export function BoardView({
           aria-label="Compact board status"
         >
           <div className="board-hud__compact-main">
-            <span className="board-hud__next-label">Next</span>
+            <span className="board-hud__next-label">
+              {role === 'manager' ? 'Mgr next' : 'Next'}
+            </span>
             <span className="board-hud__next-reason board-hud__next-reason--compact">
               {nextHint.reason}
             </span>
@@ -298,6 +335,45 @@ export function BoardView({
                 </button>
               </div>
             )}
+            {(onToggleRepairDetail || onChangeRole) && (
+              <div className="board-hud__run-opts" aria-label="Run options">
+                {onToggleRepairDetail && (
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={repairDetailEnabled}
+                    className={`toggle toggle--sm ${repairDetailEnabled ? 'toggle--on' : ''}`}
+                    onClick={() => onToggleRepairDetail(!repairDetailEnabled)}
+                    title="Toggle repair & approval detail mid-run"
+                  >
+                    <span className="toggle__knob" aria-hidden />
+                    <span className="toggle__label">
+                      Detail {repairDetailEnabled ? 'On' : 'Off'}
+                    </span>
+                  </button>
+                )}
+                {onChangeRole && (
+                  <div
+                    className="pace-seg role-seg role-seg--compact"
+                    role="radiogroup"
+                    aria-label="Role mode"
+                  >
+                    {ROLE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={role === opt.id}
+                        className={`pace-seg__btn ${role === opt.id ? 'pace-seg__btn--active' : ''}`}
+                        onClick={() => onChangeRole(opt.id)}
+                      >
+                        {opt.shortLabel}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="board-hud__zones" data-demo="zones">
               <span className="hud-zone hud-zone--speed">
                 Speed zone (unsold) · {speedCount}
@@ -306,17 +382,35 @@ export function BoardView({
                 Sold / production · {soldCount}
               </span>
             </div>
-            <div className="board-hud__cue">
-              Empty your section — find the bottleneck
+            <div
+              className={`board-hud__cue ${emphasizeManager || emphasizeAdvisor || emphasizeTech ? 'board-hud__cue--role' : ''}`}
+            >
+              {coachCue}
             </div>
             <div data-demo="magnets">
               <MagnetLegend compact className="board-hud__legend" />
             </div>
-            <div className="board-hud__counts" data-demo="counts">
+            <div
+              className={`board-hud__counts ${role === 'manager' ? 'board-hud__counts--emphasize' : ''}`}
+              data-demo="counts"
+            >
               {BOARD_COLUMNS.map((col) => (
                 <span
                   key={col}
-                  className={`hud-pill ${bottleneck === col ? 'hud-pill--hot' : ''}`}
+                  className={`hud-pill ${bottleneck === col ? 'hud-pill--hot' : ''} ${
+                    emphasizeAdvisor &&
+                    (col === 'dispatch' || col === 'inspection' || col === 'approval')
+                      ? 'hud-pill--role-focus'
+                      : ''
+                  } ${
+                    emphasizeTech &&
+                    (col === 'inspection' ||
+                      col === 'parts' ||
+                      col === 'wip' ||
+                      col === 'qc')
+                      ? 'hud-pill--role-focus'
+                      : ''
+                  }`}
                   title={COLUMN_LABELS[col]}
                 >
                   {COLUMN_LABELS[col].slice(0, 4)} {counts[col]}
@@ -342,14 +436,20 @@ export function BoardView({
                 </span>
               )}
               {lateAnswerCount > 0 && (
-                <span className="hud-pill hud-pill--late">
+                <span
+                  className={`hud-pill hud-pill--late ${emphasizeAdvisor ? 'hud-pill--role-focus' : ''}`}
+                >
                   Late ans ×{lateAnswerCount}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="board-hud board-hud--goals" aria-label="Flag hours and GP$ sold goals" data-demo="goals">
+          <div
+            className={`board-hud board-hud--goals ${role === 'manager' ? 'board-hud--goals-emphasize' : ''}`}
+            aria-label="Flag hours and GP$ sold goals"
+            data-demo="goals"
+          >
             <div className="goals-strip__label">
               Flat rate: paid on flag hours · target {goalHours} flag hrs/tech
             </div>
@@ -412,9 +512,21 @@ export function BoardView({
             </div>
           </div>
 
-          <div className="board-hud board-hud--coach" aria-label="Next most important" data-demo="next-important">
+          <div
+            className={`board-hud board-hud--coach ${role === 'manager' ? 'board-hud--coach-emphasize' : ''}`}
+            aria-label="Next most important"
+            data-demo="next-important"
+          >
             <div className="board-hud__next">
-              <span className="board-hud__next-label">Next most important</span>
+              <span className="board-hud__next-label">
+                {role === 'manager'
+                  ? 'Next most important (manager)'
+                  : role === 'advisor'
+                    ? 'Next most important (advisor)'
+                    : role === 'technician'
+                      ? 'Next most important (tech)'
+                      : 'Next most important'}
+              </span>
               <span className="board-hud__next-reason">{nextHint.reason}</span>
               {nextHint.jobId && (
                 <button
@@ -449,6 +561,8 @@ export function BoardView({
             highlightJobId={nextHint.jobId}
             bottleneck={bottleneck === col}
             simMin={simMin}
+            repairDetailEnabled={repairDetailEnabled}
+            role={role}
             onSelect={(id) => onSelect(id)}
             onDragStart={(id) => onSelect(id)}
             onDropJob={(columnId, jobId) => onMove(jobId, columnId)}
@@ -456,10 +570,11 @@ export function BoardView({
         ))}
       </div>
 
-      {selected && (
+      {selected && repairDetailEnabled && (
         <JobDetail
           job={selected}
           simMin={simMin}
+          role={role}
           onClose={() => onSelect(null)}
           onMarkInspectionComplete={() => onMarkInspectionComplete(selected.id)}
           onApproveAllPending={() => onApproveAllPending(selected.id)}
@@ -472,6 +587,7 @@ export function BoardView({
 
       <MoveBar
         job={selected}
+        role={role}
         onMove={(col) => {
           if (selected) onMove(selected.id, col);
         }}

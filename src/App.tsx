@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { BoardView } from './components/BoardView';
 import { DecisionDemo } from './components/DecisionDemo';
 import { Debrief } from './components/Debrief';
-import { Home } from './components/Home';
+import { Home, type StartOptions } from './components/Home';
 import { hasSeenTutorial, Tutorial } from './components/Tutorial';
 import {
   applyPace,
@@ -11,12 +11,16 @@ import {
   clearFlag,
   computeDebrief,
   getScenario,
+  loadRepairDetailEnabled,
+  loadRole,
   markAnswerDelivered,
   markInspectionComplete,
   markLineDone,
   markLineInRepair,
   markPartsOrdered,
   moveJob,
+  saveRepairDetailEnabled,
+  saveRole,
   startScenario,
   tickEngine,
   type AppScreen,
@@ -24,6 +28,7 @@ import {
   type DebriefStats,
   type EngineSnapshot,
   type PaceId,
+  type RoleId,
   type Scenario,
   type SpeedMul,
 } from './model';
@@ -44,6 +49,10 @@ export default function App() {
   const [demoOpen, setDemoOpen] = useState(false);
   const [pace, setPace] = useState<PaceId>('easy');
   const [speedMul, setSpeedMul] = useState<SpeedMul>(1);
+  const [repairDetailEnabled, setRepairDetailEnabled] = useState(() =>
+    loadRepairDetailEnabled(),
+  );
+  const [role, setRole] = useState<RoleId>(() => loadRole());
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
   const engineRef = useRef(engine);
@@ -95,12 +104,20 @@ export default function App() {
     };
   }, [running, scenario, finish]);
 
-  const begin = (scenarioId: string, nextPace: PaceId) => {
+  const applyStartOptions = (options: StartOptions) => {
+    setPace(options.pace);
+    setRepairDetailEnabled(options.repairDetailEnabled);
+    setRole(options.role);
+    saveRepairDetailEnabled(options.repairDetailEnabled);
+    saveRole(options.role);
+  };
+
+  const begin = (scenarioId: string, options: StartOptions) => {
     const base = getScenario(scenarioId);
     if (!base) return;
-    const sc = applyPace(base, nextPace);
+    const sc = applyPace(base, options.pace);
     const snap = startScenario(sc);
-    setPace(nextPace);
+    applyStartOptions(options);
     setSpeedMul(1);
     setScenario(sc);
     setEngine(snap);
@@ -118,12 +135,17 @@ export default function App() {
     }
   };
 
-  const beginDecisionDemo = () => {
+  const beginDecisionDemo = (options?: StartOptions) => {
     const base = getScenario(DEMO_SCENARIO_ID);
     if (!base) return;
-    const sc = applyPace(base, 'easy');
+    const opts: StartOptions = options ?? {
+      pace: 'easy',
+      repairDetailEnabled: loadRepairDetailEnabled(),
+      role: loadRole(),
+    };
+    const sc = applyPace(base, opts.pace);
     const snap = startScenario(sc);
-    setPace('easy');
+    applyStartOptions(opts);
     setSpeedMul(0.5);
     setScenario(sc);
     setEngine({ ...snap, toast: DEMO_TOAST });
@@ -190,6 +212,21 @@ export default function App() {
     setScenario(null);
     setEngine(null);
     setSelectedId(null);
+  };
+
+  const onToggleRepairDetail = (next: boolean) => {
+    setRepairDetailEnabled(next);
+    saveRepairDetailEnabled(next);
+  };
+
+  const ensureRepairDetail = useCallback(() => {
+    setRepairDetailEnabled(true);
+    saveRepairDetailEnabled(true);
+  }, []);
+
+  const onChangeRole = (next: RoleId) => {
+    setRole(next);
+    saveRole(next);
   };
 
   const onMove = (jobId: string, column: BoardColumnId) => {
@@ -309,7 +346,13 @@ export default function App() {
         fired={engine.fired}
         pace={pace}
         speedMul={speedMul}
-        onAgain={() => begin(scenario.id, pace)}
+        onAgain={() =>
+          begin(scenario.id, {
+            pace,
+            repairDetailEnabled,
+            role,
+          })
+        }
         onHome={() => {
           setScreen('home');
           setScenario(null);
@@ -333,6 +376,10 @@ export default function App() {
           selectedId={selectedId}
           speedMul={speedMul}
           onSpeedMul={setSpeedMul}
+          repairDetailEnabled={repairDetailEnabled}
+          role={role}
+          onToggleRepairDetail={onToggleRepairDetail}
+          onChangeRole={onChangeRole}
           onSelect={setSelectedId}
           onMove={onMove}
           onClearBlocker={onClearBlocker}
@@ -366,6 +413,8 @@ export default function App() {
         />
         <DecisionDemo
           open={demoOpen}
+          repairDetailEnabled={repairDetailEnabled}
+          onEnsureRepairDetail={ensureRepairDetail}
           onSelectWaiter={selectDemoWaiter}
           onFinishPlay={closeDemoPlay}
           onFinishHome={closeDemoHome}

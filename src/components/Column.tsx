@@ -1,5 +1,11 @@
-import type { BoardColumnId, VehicleJob } from '../model';
-import { COLUMN_LABELS, columnZoneLabel, isSpeedZone, isSoldZone } from '../model';
+import type { BoardColumnId, RoleId, VehicleJob } from '../model';
+import {
+  COLUMN_LABELS,
+  columnZoneLabel,
+  isRoleDimmed,
+  isSpeedZone,
+  isSoldZone,
+} from '../model';
 import { VehicleCard } from './VehicleCard';
 
 interface Props {
@@ -9,6 +15,8 @@ interface Props {
   highlightJobId?: string | null;
   bottleneck?: boolean;
   simMin?: number;
+  repairDetailEnabled?: boolean;
+  role?: RoleId;
   onSelect: (id: string) => void;
   onDragStart: (id: string) => void;
   onDropJob: (columnId: BoardColumnId, jobId: string) => void;
@@ -21,6 +29,8 @@ export function Column({
   highlightJobId,
   bottleneck,
   simMin = 0,
+  repairDetailEnabled = false,
+  role = 'full',
   onSelect,
   onDragStart,
   onDropJob,
@@ -31,10 +41,11 @@ export function Column({
     : isSoldZone(columnId)
       ? 'column--sold'
       : 'column--selling';
+  const dimColumn = isRoleDimmed(role, columnId);
 
   return (
     <section
-      className={`column ${zoneClass} ${bottleneck ? 'column--bottleneck' : ''}`}
+      className={`column ${zoneClass} ${bottleneck ? 'column--bottleneck' : ''} ${dimColumn ? 'column--role-dim' : ''}`}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
@@ -64,7 +75,9 @@ export function Column({
             job={job}
             selected={selectedId === job.id}
             highlight={highlightJobId === job.id}
+            dimmed={dimColumn}
             simMin={simMin}
+            repairDetailEnabled={repairDetailEnabled}
             onSelect={onSelect}
             onDragStart={onDragStart}
           />
