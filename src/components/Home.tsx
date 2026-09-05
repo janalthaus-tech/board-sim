@@ -1,14 +1,30 @@
 import { useState } from 'react';
-import { SCENARIOS } from '../model';
+import {
+  SCENARIOS,
+  loadPace,
+  savePace,
+  PACE_OPTIONS,
+  type PaceId,
+} from '../model';
 import { MagnetLegend } from './MagnetLegend';
 import { Tutorial } from './Tutorial';
 
 interface Props {
-  onStart: (scenarioId: string) => void;
+  onStart: (scenarioId: string, pace: PaceId) => void;
 }
 
 export function Home({ onStart }: Props) {
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [pace, setPace] = useState<PaceId>(() => loadPace());
+
+  const selectPace = (next: PaceId) => {
+    setPace(next);
+    savePace(next);
+  };
+
+  const blurb =
+    PACE_OPTIONS.find((o) => o.id === pace)?.blurb ??
+    'More real time per sim minute';
 
   return (
     <div className="home">
@@ -29,13 +45,42 @@ export function Home({ onStart }: Props) {
         <MagnetLegend className="home__legend" />
       </header>
 
+      <section className="pace-panel" aria-label="Training pace">
+        <div className="pace-panel__head">
+          <h2 className="pace-panel__title">Pace</h2>
+          <p className="pace-panel__blurb">{blurb}</p>
+        </div>
+        <div
+          className="pace-seg"
+          role="radiogroup"
+          aria-label="Pace — real-time pressure"
+        >
+          {PACE_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              role="radio"
+              aria-checked={pace === opt.id}
+              className={`pace-seg__btn ${pace === opt.id ? 'pace-seg__btn--active' : ''}`}
+              onClick={() => selectPace(opt.id)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="pace-panel__hint">
+          Pace changes real time per sim minute — separate from scenario complexity
+          (intro / intermediate / advanced).
+        </p>
+      </section>
+
       <section className="scenario-grid" aria-label="Training scenarios">
         {SCENARIOS.map((s) => (
           <button
             key={s.id}
             type="button"
             className="scenario-card"
-            onClick={() => onStart(s.id)}
+            onClick={() => onStart(s.id, pace)}
           >
             {(s.difficulty || s.focus) && (
               <div className="scenario-card__tags">

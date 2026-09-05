@@ -130,7 +130,12 @@ export interface Scenario {
   durationMin: number;
   /** Real-time seconds per sim minute */
   realSecondsPerSimMin: number;
-  /** Optional training difficulty badge */
+  /**
+   * Multiplier for the 1-hour answer window (paced scenarios).
+   * 1 = authored 60 sim min; Easy ~1.5, Challenge ~0.85.
+   */
+  answerWindowScale?: number;
+  /** Optional training difficulty badge (scenario complexity — not Pace) */
   difficulty?: 'intro' | 'intermediate' | 'advanced';
   /** One-line skill focus for the scenario picker */
   focus?: string;

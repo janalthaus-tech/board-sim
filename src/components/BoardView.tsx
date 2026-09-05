@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { BoardColumnId, BoardState, FiredEventLog, Scenario } from '../model';
+import type { BoardColumnId, BoardState, FiredEventLog, Scenario, SpeedMul } from '../model';
 import {
   BOARD_COLUMNS,
   COLUMN_LABELS,
+  SPEED_MUL_OPTIONS,
   SPEED_ZONE_COLUMNS,
   SOLD_COLUMNS,
   bottleneckColumn,
@@ -36,6 +37,8 @@ interface Props {
   onDismissToast: () => void;
   onHome: () => void;
   onOpenTutorial?: () => void;
+  speedMul: SpeedMul;
+  onSpeedMul: (mul: SpeedMul) => void;
 }
 
 function useMediaQuery(query: string): boolean {
@@ -71,6 +74,8 @@ export function BoardView({
   onDismissToast,
   onHome,
   onOpenTutorial,
+  speedMul,
+  onSpeedMul,
 }: Props) {
   const selected = useMemo(
     () => board.jobs.find((j) => j.id === selectedId),
@@ -175,6 +180,25 @@ export function BoardView({
               ?
             </button>
           )}
+          <div
+            className="speed-seg"
+            role="radiogroup"
+            aria-label="Sim speed multiplier"
+            title="Real-time playback speed (independent of Pace)"
+          >
+            {SPEED_MUL_OPTIONS.map((mul) => (
+              <button
+                key={mul}
+                type="button"
+                role="radio"
+                aria-checked={speedMul === mul}
+                className={`speed-seg__btn ${speedMul === mul ? 'speed-seg__btn--active' : ''}`}
+                onClick={() => onSpeedMul(mul)}
+              >
+                {mul}×
+              </button>
+            ))}
+          </div>
           <button type="button" className="btn btn--sm btn--primary" onClick={onTogglePause}>
             {running ? 'Pause' : 'Resume'}
           </button>

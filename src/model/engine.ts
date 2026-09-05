@@ -26,6 +26,12 @@ import {
 
 export const ANSWER_WINDOW_MIN = 60;
 
+/** Effective answer window in sim minutes (respects scenario pace scale). */
+export function answerWindowMin(scenario?: Pick<Scenario, 'answerWindowScale'> | null): number {
+  const scale = scenario?.answerWindowScale ?? 1;
+  return Math.max(1, Math.round(ANSWER_WINDOW_MIN * scale));
+}
+
 export interface EngineSnapshot {
   board: BoardState;
   simMin: number;
@@ -237,13 +243,14 @@ function tickWaiterTimers(
 function tickAnswerClock(
   board: BoardState,
   newSimMin: number,
+  windowMin: number = ANSWER_WINDOW_MIN,
 ): { board: BoardState; toast: string | null } {
   let toast: string | null = null;
   let changed = false;
   const jobs = board.jobs.map((j) => {
     if (!needsAnswer(j) || j.lateAnswer) return j;
     const elapsed = Math.floor(newSimMin) - Math.floor(dropTime(j));
-    if (elapsed < ANSWER_WINDOW_MIN) return j;
+    if (elapsed < windowMin) return j;
     changed = true;
     if (!toast) {
       toast =
@@ -287,7 +294,7 @@ export function tickEngine(
     });
   }
 
-  const answerTick = tickAnswerClock(board, newSimMin);
+  const answerTick = tickAnswerClock(board, newSimMin, answerWindowMin(scenario));
   board = answerTick.board;
   if (answerTick.toast) toast = answerTick.toast;
 
@@ -594,10 +601,11 @@ export function nextMostImportant(
 export function minutesUntilAnswerDue(
   job: VehicleJob,
   simMin: number,
+  scenario?: Pick<Scenario, 'answerWindowScale'> | null,
 ): number | null {
   if (!needsAnswer(job)) return null;
   const elapsed = Math.floor(simMin) - Math.floor(dropTime(job));
-  return ANSWER_WINDOW_MIN - elapsed;
+  return answerWindowMin(scenario) - elapsed;
 }
 
 export function computeDebrief(
@@ -644,7 +652,7 @@ export function computeDebrief(
     }
     if (j.answerDeliveredAtSimMin != null) {
       const lag = j.answerDeliveredAtSimMin - dropTime(j);
-      if (lag <= ANSWER_WINDOW_MIN) answersOnTime += 1;
+      if (lag <= answerWindowMin(scenario)) answersOnTime += 1;
       else answersLate += 1;
     } else if (needsAnswer(j)) {
       // Still unanswered at debrief — count late if past window or still in speed zone

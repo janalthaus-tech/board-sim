@@ -4,6 +4,7 @@ import { Debrief } from './components/Debrief';
 import { Home } from './components/Home';
 import { hasSeenTutorial, Tutorial } from './components/Tutorial';
 import {
+  applyPace,
   clearFlag,
   computeDebrief,
   getScenario,
@@ -15,7 +16,9 @@ import {
   type BoardColumnId,
   type DebriefStats,
   type EngineSnapshot,
+  type PaceId,
   type Scenario,
+  type SpeedMul,
 } from './model';
 
 export default function App() {
@@ -27,15 +30,19 @@ export default function App() {
   const [stats, setStats] = useState<DebriefStats | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [tutorialMarkSeen, setTutorialMarkSeen] = useState(false);
+  const [pace, setPace] = useState<PaceId>('easy');
+  const [speedMul, setSpeedMul] = useState<SpeedMul>(1);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
   const engineRef = useRef(engine);
   const scenarioRef = useRef(scenario);
   const runningRef = useRef(running);
+  const speedMulRef = useRef(speedMul);
 
   engineRef.current = engine;
   scenarioRef.current = scenario;
   runningRef.current = running;
+  speedMulRef.current = speedMul;
 
   const finish = useCallback(() => {
     const sc = scenarioRef.current;
@@ -55,7 +62,7 @@ export default function App() {
       const dt = (ts - lastTsRef.current) / 1000;
       lastTsRef.current = ts;
       const sc = scenarioRef.current;
-      const rate = 1 / sc.realSecondsPerSimMin;
+      const rate = (1 / sc.realSecondsPerSimMin) * speedMulRef.current;
       const nextMin = engineRef.current.simMin + dt * rate;
 
       if (nextMin >= sc.durationMin) {
@@ -76,10 +83,13 @@ export default function App() {
     };
   }, [running, scenario, finish]);
 
-  const begin = (scenarioId: string) => {
-    const sc = getScenario(scenarioId);
-    if (!sc) return;
+  const begin = (scenarioId: string, nextPace: PaceId) => {
+    const base = getScenario(scenarioId);
+    if (!base) return;
+    const sc = applyPace(base, nextPace);
     const snap = startScenario(sc);
+    setPace(nextPace);
+    setSpeedMul(1);
     setScenario(sc);
     setEngine(snap);
     setSelectedId(null);
@@ -157,7 +167,9 @@ export default function App() {
         scenario={scenario}
         stats={stats}
         fired={engine.fired}
-        onAgain={() => begin(scenario.id)}
+        pace={pace}
+        speedMul={speedMul}
+        onAgain={() => begin(scenario.id, pace)}
         onHome={() => {
           setScreen('home');
           setScenario(null);
@@ -179,6 +191,8 @@ export default function App() {
           toast={engine.toast}
           fired={engine.fired}
           selectedId={selectedId}
+          speedMul={speedMul}
+          onSpeedMul={setSpeedMul}
           onSelect={setSelectedId}
           onMove={onMove}
           onClearBlocker={onClearBlocker}

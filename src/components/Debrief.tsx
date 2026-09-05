@@ -1,14 +1,25 @@
-import type { DebriefStats, FiredEventLog, Scenario } from '../model';
+import type { DebriefStats, FiredEventLog, PaceId, Scenario, SpeedMul } from '../model';
+import { paceLabel } from '../model';
 
 interface Props {
   scenario: Scenario;
   stats: DebriefStats;
   fired: FiredEventLog[];
+  pace: PaceId;
+  speedMul: SpeedMul;
   onAgain: () => void;
   onHome: () => void;
 }
 
-export function Debrief({ scenario, stats, fired, onAgain, onHome }: Props) {
+export function Debrief({
+  scenario,
+  stats,
+  fired,
+  pace,
+  speedMul,
+  onAgain,
+  onHome,
+}: Props) {
   return (
     <div className="debrief">
       <header className="debrief__hero">
@@ -18,6 +29,9 @@ export function Debrief({ scenario, stats, fired, onAgain, onHome }: Props) {
           <span className="grade__letter">{stats.grade}</span>
           <span className="grade__score">{stats.score}/100</span>
         </div>
+        <p className="debrief__run-meta">
+          Pace: {paceLabel(pace)} · Playback speed: {speedMul}×
+        </p>
       </header>
 
       <div className="debrief__stats">
@@ -116,6 +130,15 @@ export function Debrief({ scenario, stats, fired, onAgain, onHome }: Props) {
       <section className="debrief__notes">
         <h2>Coach notes</h2>
         <ul>
+          <li>
+            Run settings: Pace {paceLabel(pace)}
+            {pace === 'easy'
+              ? ' (slower clock, later events, wider answer window)'
+              : pace === 'challenge'
+                ? ' (faster clock, tighter answer window)'
+                : ' (as authored)'}
+            ; playback {speedMul}×.
+          </li>
           {stats.notes.map((n) => (
             <li key={n}>{n}</li>
           ))}

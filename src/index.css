@@ -234,6 +234,97 @@ p {
   color: var(--accent);
 }
 
+
+/* Pace selector (Home) */
+.pace-panel {
+  margin: 0 0 1.75rem;
+  padding: 1rem 1.15rem 1.15rem;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.pace-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.pace-panel__title {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.pace-panel__blurb {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.pace-panel__hint {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.pace-seg,
+.speed-seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f1522;
+}
+
+.pace-seg__btn,
+.speed-seg__btn {
+  min-height: 40px;
+  padding: 0.4rem 0.95rem;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.pace-seg__btn:last-child,
+.speed-seg__btn:last-child {
+  border-right: none;
+}
+
+.pace-seg__btn:hover,
+.speed-seg__btn:hover {
+  color: var(--text);
+  background: rgba(61, 139, 253, 0.12);
+}
+
+.pace-seg__btn--active,
+.speed-seg__btn--active {
+  color: #fff;
+  background: linear-gradient(180deg, #4d97ff, #2f74e8);
+}
+
+.speed-seg {
+  align-self: center;
+}
+
+.speed-seg__btn {
+  min-height: 36px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.debrief__run-meta {
+  margin-top: 0.65rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
 /* Board layout */
 .board-screen {
   display: flex;
@@ -1460,6 +1551,15 @@ p {
   .topbar__actions {
     gap: 0.3rem;
     flex-shrink: 0;
+  }
+
+  .topbar__actions .speed-seg {
+    flex-shrink: 0;
+  }
+
+  .topbar__actions .speed-seg__btn {
+    min-height: 36px;
+    padding: 0.25rem 0.45rem;
   }
 
   .topbar__actions .btn--sm {
