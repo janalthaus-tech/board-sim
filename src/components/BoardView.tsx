@@ -16,6 +16,7 @@ import {
   totalFlagHours,
 } from '../model';
 import { Column } from './Column';
+import { MagnetLegend } from './MagnetLegend';
 import { MoveBar } from './VehicleCard';
 
 interface Props {
@@ -164,6 +165,7 @@ export function BoardView({
         <div className="board-hud__cue">
           Empty your section — find the bottleneck
         </div>
+        <MagnetLegend compact className="board-hud__legend" />
         <div className="board-hud__counts">
           {BOARD_COLUMNS.map((col) => (
             <span

@@ -59,7 +59,8 @@ export function VehicleCard({
             <span
               key={m}
               className={`magnet magnet--${m.toLowerCase()}`}
-              title={MARKER_LABELS[m]}
+              title={`${m} = ${MARKER_LABELS[m]}`}
+              aria-label={`${m} = ${MARKER_LABELS[m]}`}
             >
               {m === 'H' ? '♥' : m}
             </span>
@@ -152,7 +153,12 @@ export function MoveBar({
         {job.markers && job.markers.length > 0 && (
           <span className="movebar__markers">
             {job.markers.map((m) => (
-              <span key={m} className={`magnet magnet--${m.toLowerCase()}`}>
+              <span
+                key={m}
+                className={`magnet magnet--${m.toLowerCase()}`}
+                title={`${m} = ${MARKER_LABELS[m]}`}
+                aria-label={`${m} = ${MARKER_LABELS[m]}`}
+              >
                 {m === 'H' ? '♥' : m}
               </span>
             ))}

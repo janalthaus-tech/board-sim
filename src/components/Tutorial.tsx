@@ -20,8 +20,12 @@ const STEPS = [
     body: 'On each car, protect the earliest step first. Play “next most important thing” — earliest waiter timer first.',
   },
   {
+    title: 'Magnet markers',
+    body: 'Job cards show letter magnets: W = Waiter, R = Rental, S = Shuttle, H = Heart car. Waiters often carry a countdown timer — clear them early.',
+  },
+  {
     title: 'Production meeting & Heart cars',
-    body: 'Hold a production meeting daily at the same time. Commit “goes today.” Heart cars need extra care — don’t treat them like ordinary WIP.',
+    body: 'Hold a production meeting daily at the same time. Commit “goes today.” Heart cars (H) need extra care — don’t treat them like ordinary WIP.',
   },
   {
     title: 'Goals: flag hours, then GP$ sold',

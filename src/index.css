@@ -1250,3 +1250,86 @@ p {
 .debrief__tech-list .tech-miss {
   color: var(--warn);
 }
+
+
+/* Magnet abbreviation legend */
+.magnet-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  margin-top: 0.85rem;
+  padding: 0.55rem 0.75rem;
+  background: #0e1420;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.magnet-legend--compact {
+  margin-top: 0;
+  padding: 0.35rem 0.55rem;
+  gap: 0.35rem 0.55rem;
+}
+
+.magnet-legend__label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.magnet-legend__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+}
+
+.magnet-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.magnet-legend--compact .magnet-legend__item {
+  font-size: 0.72rem;
+}
+
+.magnet-legend__text abbr {
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.magnet-legend__eq {
+  color: var(--muted);
+}
+
+.board-hud__legend {
+  width: 100%;
+  margin: 0.15rem 0 0.25rem;
+  background: #0a101a;
+  border-color: #243049;
+}
+
+.home__legend {
+  margin-top: 1rem;
+  max-width: 40rem;
+}
+
+.footer__legend {
+  justify-content: center;
+  margin: 0 auto 0.85rem;
+  max-width: 36rem;
+  text-align: left;
+}
+
+.footer__note {
+  margin: 0;
+}

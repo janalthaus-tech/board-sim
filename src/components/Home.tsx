@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SCENARIOS } from '../model';
+import { MagnetLegend } from './MagnetLegend';
 import { Tutorial } from './Tutorial';
 
 interface Props {
@@ -25,6 +26,7 @@ export function Home({ onStart }: Props) {
         >
           How The Board works
         </button>
+        <MagnetLegend className="home__legend" />
       </header>
 
       <section className="scenario-grid" aria-label="Training scenarios">

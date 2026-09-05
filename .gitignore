@@ -35,3 +35,4 @@ android/.idea
 android/captures
 *.keystore
 !debug.keystore
+.vercel
