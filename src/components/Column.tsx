@@ -8,6 +8,7 @@ interface Props {
   selectedId: string | null;
   highlightJobId?: string | null;
   bottleneck?: boolean;
+  simMin?: number;
   onSelect: (id: string) => void;
   onDragStart: (id: string) => void;
   onDropJob: (columnId: BoardColumnId, jobId: string) => void;
@@ -19,6 +20,7 @@ export function Column({
   selectedId,
   highlightJobId,
   bottleneck,
+  simMin = 0,
   onSelect,
   onDragStart,
   onDropJob,
@@ -62,6 +64,7 @@ export function Column({
             job={job}
             selected={selectedId === job.id}
             highlight={highlightJobId === job.id}
+            simMin={simMin}
             onSelect={onSelect}
             onDragStart={onDragStart}
           />

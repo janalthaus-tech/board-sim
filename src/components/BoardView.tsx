@@ -17,6 +17,7 @@ import {
   totalFlagHours,
 } from '../model';
 import { Column } from './Column';
+import { JobDetail } from './JobDetail';
 import { MagnetLegend } from './MagnetLegend';
 import { MoveBar } from './VehicleCard';
 
@@ -32,6 +33,12 @@ interface Props {
   onMove: (jobId: string, column: BoardColumnId) => void;
   onClearBlocker: (jobId: string) => void;
   onAnswerDelivered: (jobId: string) => void;
+  onMarkInspectionComplete: (jobId: string) => void;
+  onApproveAllPending: (jobId: string) => void;
+  onApproveLine: (jobId: string, lineId: string) => void;
+  onMarkPartsOrdered: (jobId: string, lineId: string) => void;
+  onMarkLineDone: (jobId: string, lineId: string) => void;
+  onMarkLineInRepair: (jobId: string, lineId: string) => void;
   onTogglePause: () => void;
   onEnd: () => void;
   onDismissToast: () => void;
@@ -72,6 +79,12 @@ export function BoardView({
   onMove,
   onClearBlocker,
   onAnswerDelivered,
+  onMarkInspectionComplete,
+  onApproveAllPending,
+  onApproveLine,
+  onMarkPartsOrdered,
+  onMarkLineDone,
+  onMarkLineInRepair,
   onTogglePause,
   onEnd,
   onDismissToast,
@@ -435,12 +448,27 @@ export function BoardView({
             selectedId={selectedId}
             highlightJobId={nextHint.jobId}
             bottleneck={bottleneck === col}
+            simMin={simMin}
             onSelect={(id) => onSelect(id)}
             onDragStart={(id) => onSelect(id)}
             onDropJob={(columnId, jobId) => onMove(jobId, columnId)}
           />
         ))}
       </div>
+
+      {selected && (
+        <JobDetail
+          job={selected}
+          simMin={simMin}
+          onClose={() => onSelect(null)}
+          onMarkInspectionComplete={() => onMarkInspectionComplete(selected.id)}
+          onApproveAllPending={() => onApproveAllPending(selected.id)}
+          onApproveLine={(lineId) => onApproveLine(selected.id, lineId)}
+          onMarkPartsOrdered={(lineId) => onMarkPartsOrdered(selected.id, lineId)}
+          onMarkLineDone={(lineId) => onMarkLineDone(selected.id, lineId)}
+          onMarkLineInRepair={(lineId) => onMarkLineInRepair(selected.id, lineId)}
+        />
+      )}
 
       <MoveBar
         job={selected}

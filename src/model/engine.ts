@@ -268,6 +268,45 @@ function tickAnswerClock(
   };
 }
 
+/**
+ * When sim clock reaches partsEtaSimMin, flip parts_ordered → parts_ready
+ * and toast the first newly ready line.
+ */
+function tickPartsReady(
+  board: BoardState,
+  newSimMin: number,
+): { board: BoardState; toast: string | null } {
+  const floor = Math.floor(newSimMin);
+  let toast: string | null = null;
+  let changed = false;
+  const jobs = board.jobs.map((j) => {
+    const lines = j.repairLines;
+    if (!lines || lines.length === 0) return j;
+    let lineChanged = false;
+    const nextLines = lines.map((line) => {
+      if (line.status !== 'parts_ordered') return line;
+      if (line.partsEtaSimMin == null || line.partsEtaSimMin > floor) return line;
+      lineChanged = true;
+      if (!toast) {
+        toast =
+          'Parts ready: ' +
+          line.description +
+          ' (' +
+          j.customerName +
+          ')';
+      }
+      return { ...line, status: 'parts_ready' as const };
+    });
+    if (!lineChanged) return j;
+    changed = true;
+    return { ...j, repairLines: nextLines };
+  });
+  return {
+    board: changed ? { ...board, jobs } : board,
+    toast,
+  };
+}
+
 /** Advance clock; apply events due between prevSimMin (exclusive) and simMin (inclusive). */
 export function tickEngine(
   scenario: Scenario,
@@ -297,6 +336,10 @@ export function tickEngine(
   const answerTick = tickAnswerClock(board, newSimMin, answerWindowMin(scenario));
   board = answerTick.board;
   if (answerTick.toast) toast = answerTick.toast;
+
+  const partsTick = tickPartsReady(board, newSimMin);
+  board = partsTick.board;
+  if (partsTick.toast) toast = partsTick.toast;
 
   return { board, simMin: newSimMin, fired, toast };
 }

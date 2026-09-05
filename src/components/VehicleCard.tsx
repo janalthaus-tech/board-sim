@@ -1,10 +1,20 @@
 import type { BoardColumnId, JobMarker, VehicleJob } from '../model';
-import { vehicleLabel, BOARD_COLUMNS, COLUMN_LABELS, MARKER_LABELS } from '../model';
+import {
+  vehicleLabel,
+  BOARD_COLUMNS,
+  COLUMN_LABELS,
+  MARKER_LABELS,
+  approvalChipLabel,
+  inspectionChipLabel,
+  partsChipLabel,
+  repairChipLabel,
+} from '../model';
 
 interface Props {
   job: VehicleJob;
   selected: boolean;
   highlight?: boolean;
+  simMin?: number;
   onSelect: (id: string) => void;
   onDragStart: (id: string) => void;
 }
@@ -24,6 +34,7 @@ export function VehicleCard({
   job,
   selected,
   highlight,
+  simMin = 0,
   onSelect,
   onDragStart,
 }: Props) {
@@ -32,6 +43,10 @@ export function VehicleCard({
   const isHeart = markers.includes('H');
   const timerCritical =
     isWaiter && job.waiterTimerMin != null && job.waiterTimerMin <= 5;
+  const inspChip = inspectionChipLabel(job);
+  const apprChip = approvalChipLabel(job);
+  const partsChip = partsChipLabel(job, simMin);
+  const repairChip = repairChipLabel(job);
 
   return (
     <article
@@ -115,6 +130,30 @@ export function VehicleCard({
           </span>
         )}
       </div>
+      {(inspChip || apprChip || partsChip || repairChip) && (
+        <div className="card__repair-chips" data-demo="repair-chips">
+          {inspChip && (
+            <span className="chip chip--insp" title="Inspection status">
+              {inspChip}
+            </span>
+          )}
+          {apprChip && (
+            <span className="chip chip--appr" title="Approved / total lines">
+              {apprChip}
+            </span>
+          )}
+          {partsChip && (
+            <span className="chip chip--parts-eta" title="Parts availability">
+              {partsChip}
+            </span>
+          )}
+          {repairChip && (
+            <span className="chip chip--repair" title="Repair progress">
+              {repairChip}
+            </span>
+          )}
+        </div>
+      )}
       {job.flags.length > 0 && (
         <div className="card__flags">
           {job.flags.map((f) => (

@@ -32,7 +32,9 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 2.5,
         keysOnBoard: true,
         droppedAtSimMin: 0,
-      },
+      
+        inspectionStatus: 'not_started',
+},
       {
         customerName: 'James Chen',
         year: 2016,
@@ -45,7 +47,24 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Check engine light',
         markers: ['R'],
         soldHours: 1.5,
-      },
+      
+        inspectionStatus: 'in_progress',
+        repairLines: [
+          {
+            id: 'mr-jc-1',
+            description: 'Diagnose CEL — P0420 catalyst efficiency',
+            hours: 1.0,
+            status: 'proposed',
+          },
+          {
+            id: 'mr-jc-2',
+            description: 'Replace downstream O2 sensor',
+            hours: 0.5,
+            partsNote: 'O2 sensor',
+            status: 'proposed',
+          },
+        ],
+},
       {
         customerName: 'Aisha Patel',
         year: 2021,
@@ -56,7 +75,33 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Front suspension clunk',
         markers: ['S'],
         soldHours: 3.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'mr-ap-1',
+            description: 'Replace LF lower control arm',
+            hours: 2.0,
+            partsNote: 'Control arm + bushings',
+            status: 'pending_approval',
+          },
+          {
+            id: 'mr-ap-2',
+            description: 'Alignment after suspension',
+            hours: 1.0,
+            status: 'pending_approval',
+          },
+          {
+            id: 'mr-ap-3',
+            description: 'Sway bar links (both)',
+            hours: 0.8,
+            partsNote: 'Sway links',
+            status: 'approved',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Bob Miller',
         year: 2014,
@@ -68,7 +113,28 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Oil leak + filter housing',
         soldHours: 2.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'mr-bm-1',
+            description: 'Oil filter housing gasket',
+            hours: 1.5,
+            partsNote: 'Housing gasket kit',
+            status: 'in_repair',
+            approvedAtSimMin: 0,
+          },
+          {
+            id: 'mr-bm-2',
+            description: 'Oil + filter service',
+            hours: 0.5,
+            status: 'done',
+            approvedAtSimMin: 0,
+            completedAtSimMin: 0,
+          },
+        ],
+},
     ],
     events: [
       {
@@ -174,7 +240,34 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Head gasket — waiting kit',
         markers: ['R'],
         soldHours: 8.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'pd-dw-1',
+            description: 'Head gasket kit + machine labor',
+            hours: 6.0,
+            partsNote: 'Head gasket kit',
+            status: 'parts_ordered',
+            partsEtaSimMin: 45,
+            approvedAtSimMin: 0,
+          },
+          {
+            id: 'pd-dw-2',
+            description: 'Coolant flush after reseal',
+            hours: 1.0,
+            status: 'approved',
+            approvedAtSimMin: 0,
+          },
+          {
+            id: 'pd-dw-3',
+            description: 'Timing cover reseal (related)',
+            hours: 1.0,
+            status: 'declined',
+          },
+        ],
+},
       {
         customerName: 'Omar Haddad',
         year: 2019,
@@ -186,7 +279,29 @@ export const SCENARIOS: Scenario[] = [
         flags: ['waiting'],
         concern: 'Water pump + thermostat',
         soldHours: 4.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'pd-oh-1',
+            description: 'Water pump + thermostat',
+            hours: 3.5,
+            partsNote: 'Water pump / thermostat',
+            status: 'parts_ordered',
+            partsEtaSimMin: 25,
+            approvedAtSimMin: 0,
+          },
+          {
+            id: 'pd-oh-2',
+            description: 'Drive belt',
+            hours: 0.5,
+            partsNote: 'Serpentine belt',
+            status: 'parts_ready',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Lisa Park',
         year: 2022,
@@ -198,7 +313,24 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Suspension noise EV',
         soldHours: 2.0,
-      },
+      
+        inspectionStatus: 'in_progress',
+        repairLines: [
+          {
+            id: 'pd-lp-1',
+            description: 'Road-test EV suspension noise',
+            hours: 0.8,
+            status: 'proposed',
+          },
+          {
+            id: 'pd-lp-2',
+            description: 'Control arm bushings (if confirmed)',
+            hours: 2.0,
+            partsNote: 'Bushing kit',
+            status: 'proposed',
+          },
+        ],
+},
       {
         customerName: 'Greg Foster',
         year: 2013,
@@ -210,7 +342,26 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Brake job in progress',
         soldHours: 2.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'pd-gf-1',
+            description: 'Front brake pads + rotors',
+            hours: 2.0,
+            status: 'in_repair',
+            approvedAtSimMin: 0,
+          },
+          {
+            id: 'pd-gf-2',
+            description: 'Brake fluid flush',
+            hours: 0.5,
+            status: 'approved',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Nina Volkov',
         year: 2018,
@@ -221,7 +372,25 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Timing chain estimate',
         markers: ['S'],
         soldHours: 6.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'pd-nv-1',
+            description: 'Timing chain kit',
+            hours: 5.0,
+            partsNote: 'Timing chain kit',
+            status: 'pending_approval',
+          },
+          {
+            id: 'pd-nv-2',
+            description: 'Valve cover gaskets',
+            hours: 1.5,
+            status: 'pending_approval',
+          },
+        ],
+},
     ],
     events: [
       {
@@ -315,7 +484,32 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Oil filter housing leak',
         markers: ['R'],
         soldHours: 3.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'ab-rk-1',
+            description: 'Oil filter housing replacement',
+            hours: 2.5,
+            partsNote: 'OFH assembly',
+            status: 'pending_approval',
+          },
+          {
+            id: 'ab-rk-2',
+            description: 'Oil service after repair',
+            hours: 0.5,
+            status: 'pending_approval',
+          },
+          {
+            id: 'ab-rk-3',
+            description: 'Cabin filter',
+            hours: 0.3,
+            status: 'approved',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Steve Alvarez',
         year: 2015,
@@ -327,7 +521,19 @@ export const SCENARIOS: Scenario[] = [
         markers: ['W'],
         waiterTimerMin: 22,
         soldHours: 2.8,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'ab-sa-1',
+            description: 'Water pump / coolant leak repair',
+            hours: 2.8,
+            partsNote: 'Water pump',
+            status: 'pending_approval',
+          },
+        ],
+},
       {
         customerName: 'Priya Shah',
         year: 2021,
@@ -349,7 +555,23 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Vibration at highway speed',
         soldHours: 1.5,
-      },
+      
+        inspectionStatus: 'in_progress',
+        repairLines: [
+          {
+            id: 'ab-md-1',
+            description: 'Balance tires / check wheels',
+            hours: 1.0,
+            status: 'proposed',
+          },
+          {
+            id: 'ab-md-2',
+            description: 'Axle / CV inspection findings',
+            hours: 0.5,
+            status: 'proposed',
+          },
+        ],
+},
       {
         customerName: 'Carla Diaz',
         year: 2014,
@@ -361,7 +583,20 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Alternator replacement',
         soldHours: 2.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'ab-cd-1',
+            description: 'Alternator replacement',
+            hours: 2.0,
+            status: 'done',
+            approvedAtSimMin: 0,
+            completedAtSimMin: 0,
+          },
+        ],
+},
     ],
     events: [
       {
@@ -450,7 +685,27 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Transfer case leak',
         soldHours: 4.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'tc-at-1',
+            description: 'Transfer case reseal',
+            hours: 3.5,
+            partsNote: 'Seal kit',
+            status: 'in_repair',
+            approvedAtSimMin: 0,
+          },
+          {
+            id: 'tc-at-2',
+            description: 'Transfer case fluid',
+            hours: 0.5,
+            status: 'approved',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Ben Carter',
         year: 2019,
@@ -463,7 +718,27 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Timing belt due + leaks',
         markers: ['R'],
         soldHours: 6.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'tc-bc-1',
+            description: 'Timing belt + water pump',
+            hours: 5.0,
+            partsNote: 'Timing belt kit',
+            status: 'in_repair',
+            approvedAtSimMin: 0,
+          },
+          {
+            id: 'tc-bc-2',
+            description: 'Valve cover leaks',
+            hours: 1.5,
+            status: 'approved',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Zoe Martin',
         year: 2021,
@@ -473,7 +748,28 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Brake package',
         soldHours: 2.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'tc-zm-1',
+            description: 'Front brake package',
+            hours: 2.0,
+            status: 'done',
+            approvedAtSimMin: 0,
+            completedAtSimMin: 0,
+          },
+          {
+            id: 'tc-zm-2',
+            description: 'Rear pads',
+            hours: 1.0,
+            status: 'done',
+            approvedAtSimMin: 0,
+            completedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Ian Brooks',
         year: 2012,
@@ -483,7 +779,21 @@ export const SCENARIOS: Scenario[] = [
         flags: ['waiting'],
         concern: 'Hybrid battery modules',
         soldHours: 5.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'tc-ib-1',
+            description: 'Hybrid battery modules',
+            hours: 4.5,
+            partsNote: 'Battery modules',
+            status: 'parts_ordered',
+            partsEtaSimMin: 55,
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Kim Nakamura',
         year: 2018,
@@ -493,7 +803,17 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Rattle on cold start',
         soldHours: 1.5,
-      },
+      
+        inspectionStatus: 'in_progress',
+        repairLines: [
+          {
+            id: 'tc-kn-1',
+            description: 'Cold-start rattle diagnosis',
+            hours: 1.0,
+            status: 'proposed',
+          },
+        ],
+},
       {
         customerName: 'Drew Phillips',
         year: 2020,
@@ -615,7 +935,25 @@ export const SCENARIOS: Scenario[] = [
         flags: ['waiting'],
         concern: 'Comeback estimate — A/C recharge failed again',
         soldHours: 1.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'cd-mr-1',
+            description: 'A/C leak diagnosis + dye',
+            hours: 1.0,
+            status: 'pending_approval',
+          },
+          {
+            id: 'cd-mr-2',
+            description: 'Compressor if leak confirmed',
+            hours: 3.0,
+            partsNote: 'Compressor',
+            status: 'proposed',
+          },
+        ],
+},
       {
         customerName: 'Nora Blake',
         year: 2020,
@@ -627,7 +965,19 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Timing cover reseal (original RO)',
         soldHours: 4.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'cd-nb-1',
+            description: 'Timing cover reseal',
+            hours: 4.0,
+            status: 'in_repair',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Pete Alvarez',
         year: 2016,
@@ -639,7 +989,19 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Comeback rework — axle click still present',
         soldHours: 3.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'cd-pa-1',
+            description: 'Axle / CV click rework',
+            hours: 3.0,
+            status: 'in_repair',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Gina Torres',
         year: 2018,
@@ -748,7 +1110,20 @@ export const SCENARIOS: Scenario[] = [
         markers: ['W'],
         waiterTimerMin: 30,
         soldHours: 2.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'pt-oh-1',
+            description: 'Brake package — pads/rotors',
+            hours: 2.5,
+            status: 'done',
+            approvedAtSimMin: 0,
+            completedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Ethan Cole',
         year: 2017,
@@ -795,7 +1170,20 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Wheel bearing almost done — 4:00 promise',
         markers: ['R'],
         soldHours: 2.2,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'pt-sd-1',
+            description: 'Wheel bearing (RF)',
+            hours: 2.0,
+            partsNote: 'Hub/bearing',
+            status: 'in_repair',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Jake Morrow',
         year: 2015,
@@ -831,7 +1219,25 @@ export const SCENARIOS: Scenario[] = [
         markers: ['W'],
         waiterTimerMin: 18,
         soldHours: 3.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'pt-tr-1',
+            description: 'Front struts (pair)',
+            hours: 3.0,
+            partsNote: 'Strut assemblies',
+            status: 'pending_approval',
+          },
+          {
+            id: 'pt-tr-2',
+            description: 'Alignment',
+            hours: 1.0,
+            status: 'pending_approval',
+          },
+        ],
+},
     ],
     events: [
       {
@@ -919,7 +1325,17 @@ export const SCENARIOS: Scenario[] = [
         flags: [],
         concern: 'Multi-point + squeak under load',
         soldHours: 1.5,
-      },
+      
+        inspectionStatus: 'in_progress',
+        repairLines: [
+          {
+            id: 'nt-hb-1',
+            description: 'Multi-point findings — squeak under load',
+            hours: 1.0,
+            status: 'proposed',
+          },
+        ],
+},
       {
         customerName: 'Luis Ortega',
         year: 2016,
@@ -955,7 +1371,28 @@ export const SCENARIOS: Scenario[] = [
         flags: ['waiting'],
         concern: 'Waiting rear pads + hardware',
         soldHours: 2.0,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'nt-kp-1',
+            description: 'Rear pads + hardware',
+            hours: 1.5,
+            partsNote: 'Rear pads + clips',
+            status: 'parts_ordered',
+            partsEtaSimMin: 35,
+            approvedAtSimMin: 0,
+          },
+          {
+            id: 'nt-kp-2',
+            description: 'Brake fluid exchange',
+            hours: 0.5,
+            status: 'approved',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Amber Quinn',
         year: 2015,
@@ -1108,7 +1545,26 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Battery + alternator estimate waiting auth',
         markers: ['S'],
         soldHours: 2.5,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'ws-sg-1',
+            description: 'Battery replacement (AGM)',
+            hours: 0.8,
+            partsNote: 'AGM battery',
+            status: 'pending_approval',
+          },
+          {
+            id: 'ws-sg-2',
+            description: 'Alternator if charging fails',
+            hours: 2.0,
+            partsNote: 'Alternator',
+            status: 'proposed',
+          },
+        ],
+},
       {
         customerName: 'Mitch Coleman',
         year: 2014,
@@ -1274,7 +1730,21 @@ export const SCENARIOS: Scenario[] = [
         concern: 'Pads on order — sold hours parked',
         soldHours: 2.0,
         tech: 'Kai',
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'wt-tc-1',
+            description: 'Front pads + rotors',
+            hours: 2.0,
+            partsNote: 'Pads/rotors',
+            status: 'parts_ordered',
+            partsEtaSimMin: 20,
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Derek Holt',
         year: 2017,
@@ -1288,7 +1758,19 @@ export const SCENARIOS: Scenario[] = [
         markers: ['W'],
         waiterTimerMin: 25,
         soldHours: 1.8,
-      },
+      
+        inspectionStatus: 'complete',
+        answerDeliveredAtSimMin: 0,
+        repairLines: [
+          {
+            id: 'wt-dh-1',
+            description: 'Alternator replacement',
+            hours: 1.8,
+            status: 'in_repair',
+            approvedAtSimMin: 0,
+          },
+        ],
+},
       {
         customerName: 'Sam Rivera',
         year: 2014,
@@ -1454,7 +1936,23 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 1.8,
         droppedAtSimMin: -45,
         keysOnBoard: false,
-      },
+      
+        inspectionStatus: 'in_progress',
+        repairLines: [
+          {
+            id: 'sz-mc-1',
+            description: 'Multi-point — not sold yet',
+            hours: 1.0,
+            status: 'proposed',
+          },
+          {
+            id: 'sz-mc-2',
+            description: 'Cabin filter recommend',
+            hours: 0.3,
+            status: 'proposed',
+          },
+        ],
+},
       {
         customerName: 'Sara Quinn',
         year: 2017,
@@ -1479,7 +1977,23 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 2.5,
         answerDeliveredAtSimMin: -5,
         droppedAtSimMin: -55,
-      },
+      
+        inspectionStatus: 'complete',
+        repairLines: [
+          {
+            id: 'sz-do-1',
+            description: 'Tune-up / plugs',
+            hours: 1.5,
+            status: 'pending_approval',
+          },
+          {
+            id: 'sz-do-2',
+            description: 'Intake gasket',
+            hours: 2.0,
+            status: 'pending_approval',
+          },
+        ],
+},
       {
         customerName: 'Paula Reed',
         year: 2014,
@@ -1493,7 +2007,18 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 2.2,
         answerDeliveredAtSimMin: -30,
         droppedAtSimMin: -90,
-      },
+      
+        inspectionStatus: 'complete',
+        repairLines: [
+          {
+            id: 'sz-pr-1',
+            description: 'Front brake job (sold)',
+            hours: 2.2,
+            status: 'in_repair',
+            approvedAtSimMin: -30,
+          },
+        ],
+},
       {
         customerName: 'Hank Lee',
         year: 2021,
@@ -1506,7 +2031,20 @@ export const SCENARIOS: Scenario[] = [
         tech: 'Kai',
         answerDeliveredAtSimMin: -40,
         droppedAtSimMin: -100,
-      },
+      
+        inspectionStatus: 'complete',
+        repairLines: [
+          {
+            id: 'sz-hl-1',
+            description: 'Control arms (sold — waiting parts)',
+            hours: 3.0,
+            partsNote: 'Control arms',
+            status: 'parts_ordered',
+            partsEtaSimMin: 40,
+            approvedAtSimMin: -40,
+          },
+        ],
+},
     ],
     events: [
       {
@@ -1636,7 +2174,23 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 2.5,
         answerDeliveredAtSimMin: 0,
         droppedAtSimMin: -15,
-      },
+      
+        inspectionStatus: 'complete',
+        repairLines: [
+          {
+            id: 'pm-at-1',
+            description: 'Brake package estimate',
+            hours: 2.5,
+            status: 'pending_approval',
+          },
+          {
+            id: 'pm-at-2',
+            description: 'Brake fluid flush',
+            hours: 0.5,
+            status: 'pending_approval',
+          },
+        ],
+},
       {
         customerName: 'Ben Carter',
         year: 2016,
@@ -1649,7 +2203,17 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 4.0,
         answerDeliveredAtSimMin: 0,
         droppedAtSimMin: -25,
-      },
+      
+        inspectionStatus: 'complete',
+        repairLines: [
+          {
+            id: 'pm-bc-1',
+            description: 'Timing cover reseal estimate',
+            hours: 4.0,
+            status: 'pending_approval',
+          },
+        ],
+},
       {
         customerName: 'Zoe Martin',
         year: 2019,
@@ -1661,7 +2225,18 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 2.8,
         answerDeliveredAtSimMin: 0,
         droppedAtSimMin: -40,
-      },
+      
+        inspectionStatus: 'complete',
+        repairLines: [
+          {
+            id: 'pm-zm-1',
+            description: 'Coolant leak / water pump auth',
+            hours: 2.8,
+            partsNote: 'Water pump',
+            status: 'pending_approval',
+          },
+        ],
+},
       {
         customerName: 'Ian Brooks',
         year: 2015,
@@ -1675,7 +2250,18 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 3.5,
         answerDeliveredAtSimMin: -20,
         droppedAtSimMin: -80,
-      },
+      
+        inspectionStatus: 'complete',
+        repairLines: [
+          {
+            id: 'pm-ib-1',
+            description: 'Water pump (sold)',
+            hours: 3.5,
+            status: 'in_repair',
+            approvedAtSimMin: -20,
+          },
+        ],
+},
       {
         customerName: 'Kim Nakamura',
         year: 2020,
@@ -1688,7 +2274,28 @@ export const SCENARIOS: Scenario[] = [
         soldHours: 2.0,
         answerDeliveredAtSimMin: -10,
         droppedAtSimMin: -60,
-      },
+      
+        inspectionStatus: 'complete',
+        repairLines: [
+          {
+            id: 'pm-kn-1',
+            description: 'Rear pads',
+            hours: 1.5,
+            partsNote: 'Pads',
+            status: 'parts_ordered',
+            partsEtaSimMin: 30,
+            approvedAtSimMin: -10,
+          },
+          {
+            id: 'pm-kn-2',
+            description: 'Hardware kit',
+            hours: 0.3,
+            status: 'parts_ordered',
+            partsEtaSimMin: 30,
+            approvedAtSimMin: -10,
+          },
+        ],
+},
       {
         customerName: 'Drew Phillips',
         year: 2017,

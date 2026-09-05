@@ -10,7 +10,9 @@ export type DemoTarget =
   | 'toast'
   | 'goals'
   | 'movebar'
-  | 'speed';
+  | 'speed'
+  | 'repair-chips'
+  | 'job-detail';
 
 interface DemoStep {
   target: DemoTarget;
@@ -61,6 +63,18 @@ const STEPS: DemoStep[] = [
     target: 'goals',
     title: 'Flag hrs & GP$ sold',
     body: 'Shop goals track flat-rate flag hours and GP$ sold. Important — but secondary to clearing the unsold speed zone and waiter timers.',
+  },
+  {
+    target: 'repair-chips',
+    title: 'Inspection → approval → parts → repair',
+    body: 'Card chips answer the four shop questions: Is inspection done? What did the customer approve? Are parts available (and when)? Is the repair complete?',
+    selectWaiter: true,
+  },
+  {
+    target: 'job-detail',
+    title: 'Open a card for line-level detail',
+    body: 'The detail sheet shows proposed lines, approvals, parts ETAs, and completion times. Training actions let you mark inspection complete, approve, order parts, or finish a line.',
+    selectWaiter: true,
   },
   {
     target: 'movebar',
@@ -122,6 +136,7 @@ export function DecisionDemo({
   const last = step >= STEPS.length - 1;
   const coachTop =
     current?.target === 'movebar' ||
+    current?.target === 'job-detail' ||
     current?.target === 'toast' ||
     current?.target === 'speed';
 

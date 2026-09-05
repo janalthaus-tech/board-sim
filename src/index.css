@@ -1898,3 +1898,217 @@ body:has(.demo-overlay:not(.demo-overlay--done)) .movebar {
 body:has(.demo-overlay:not(.demo-overlay--done)) .demo-coach {
   z-index: 100;
 }
+
+
+/* Repair / inspection summary chips on cards */
+.card__repair-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.35rem 0 0.25rem;
+}
+
+.chip--insp {
+  background: #12261f;
+  color: #86efac;
+  border: 1px solid #166534;
+}
+
+.chip--appr {
+  background: #1a2238;
+  color: #93c5fd;
+  border: 1px solid #1e3a5f;
+}
+
+.chip--parts-eta {
+  background: #2a2210;
+  color: #fcd34d;
+  border: 1px solid #854d0e;
+}
+
+.chip--parts-ready {
+  background: #12261f;
+  color: #4ade80;
+  border: 1px solid #166534;
+}
+
+.chip--repair {
+  background: #1f1830;
+  color: #c4b5fd;
+  border: 1px solid #5b21b6;
+}
+
+.chip--line-proposed,
+.chip--line-pending_approval {
+  background: #1e293b;
+  color: #93c5fd;
+  border: 1px solid #334155;
+}
+
+.chip--line-approved {
+  background: #12261f;
+  color: #86efac;
+  border: 1px solid #166534;
+}
+
+.chip--line-declined {
+  background: #3f1d1d;
+  color: #fecaca;
+  border: 1px solid #7f1d1d;
+}
+
+.chip--line-parts_ordered {
+  background: #2a2210;
+  color: #fcd34d;
+  border: 1px solid #854d0e;
+}
+
+.chip--line-parts_ready {
+  background: #12261f;
+  color: #4ade80;
+  border: 1px solid #166534;
+}
+
+.chip--line-in_repair {
+  background: #1f1830;
+  color: #c4b5fd;
+  border: 1px solid #5b21b6;
+}
+
+.chip--line-done {
+  background: #0f2918;
+  color: #bbf7d0;
+  border: 1px solid #15803d;
+}
+
+/* Job detail drawer / sheet */
+.job-detail {
+  border-top: 1px solid var(--border);
+  background: #0c121c;
+  padding: 0.75rem 1rem;
+  padding-bottom: 0.5rem;
+  max-height: min(42vh, 360px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
+  z-index: 45;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.job-detail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.job-detail__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.job-detail__titles span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.job-detail__questions {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.job-detail__q {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  background: #121a28;
+  border: 1px solid var(--border);
+}
+
+.job-detail__q-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+
+.job-detail__q-answer {
+  font-size: 0.86rem;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+.job-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.job-detail__lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.job-line {
+  padding: 0.55rem 0.6rem;
+  border-radius: 12px;
+  background: #141c2c;
+  border: 1px solid var(--border);
+}
+
+.job-line__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.job-line__desc {
+  font-size: 0.88rem;
+}
+
+.job-line__meta,
+.job-line__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.job-line__actions {
+  margin-top: 0.4rem;
+}
+
+.job-detail__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+@media (max-width: 900px) {
+  .job-detail {
+    max-height: min(38vh, 320px);
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .job-detail {
+    max-height: min(34vh, 220px);
+  }
+}
+
+body:has(.demo-overlay:not(.demo-overlay--done)) .job-detail {
+  pointer-events: none;
+}

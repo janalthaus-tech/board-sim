@@ -79,6 +79,13 @@ export function moveJob(
       if (toColumn === 'final' && job.column !== 'final') {
         next.completedAtSimMin = simMin;
         next.flags = job.flags.filter((f) => f !== 'waiting' && f !== 'blocked');
+        if (job.repairLines) {
+          next.repairLines = job.repairLines.map((line) =>
+            line.status === 'in_repair'
+              ? { ...line, status: 'done' as const, completedAtSimMin: simMin }
+              : line,
+          );
+        }
       }
       if (toColumn !== 'final') {
         next.completedAtSimMin = undefined;

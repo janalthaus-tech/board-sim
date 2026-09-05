@@ -6,10 +6,16 @@ import { Home } from './components/Home';
 import { hasSeenTutorial, Tutorial } from './components/Tutorial';
 import {
   applyPace,
+  approveAllPending,
+  approveLine,
   clearFlag,
   computeDebrief,
   getScenario,
   markAnswerDelivered,
+  markInspectionComplete,
+  markLineDone,
+  markLineInRepair,
+  markPartsOrdered,
   moveJob,
   startScenario,
   tickEngine,
@@ -221,6 +227,76 @@ export default function App() {
     });
   };
 
+  const onMarkInspectionComplete = (jobId: string) => {
+    setEngine((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        board: markInspectionComplete(prev.board, jobId),
+        toast: 'Inspection complete — proposed repairs ready for the advisor.',
+      };
+    });
+  };
+
+  const onApproveAllPending = (jobId: string) => {
+    setEngine((prev) => {
+      if (!prev) return prev;
+      const sim = Math.floor(prev.simMin);
+      return {
+        ...prev,
+        board: approveAllPending(prev.board, jobId, sim),
+        toast: 'Customer approved pending lines.',
+      };
+    });
+  };
+
+  const onApproveLine = (jobId: string, lineId: string) => {
+    setEngine((prev) => {
+      if (!prev) return prev;
+      const sim = Math.floor(prev.simMin);
+      return {
+        ...prev,
+        board: approveLine(prev.board, jobId, lineId, sim),
+        toast: 'Line approved.',
+      };
+    });
+  };
+
+  const onMarkPartsOrdered = (jobId: string, lineId: string) => {
+    setEngine((prev) => {
+      if (!prev) return prev;
+      const sim = Math.floor(prev.simMin);
+      return {
+        ...prev,
+        board: markPartsOrdered(prev.board, jobId, lineId, sim, 30),
+        toast: 'Parts ordered — ETA +30 sim minutes.',
+      };
+    });
+  };
+
+  const onMarkLineDone = (jobId: string, lineId: string) => {
+    setEngine((prev) => {
+      if (!prev) return prev;
+      const sim = Math.floor(prev.simMin);
+      return {
+        ...prev,
+        board: markLineDone(prev.board, jobId, lineId, sim),
+        toast: 'Repair line marked done.',
+      };
+    });
+  };
+
+  const onMarkLineInRepair = (jobId: string, lineId: string) => {
+    setEngine((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        board: markLineInRepair(prev.board, jobId, lineId),
+        toast: 'Line moved to in repair.',
+      };
+    });
+  };
+
   if (screen === 'home') {
     return <Home onStart={begin} onWatchDemo={beginDecisionDemo} />;
   }
@@ -261,6 +337,12 @@ export default function App() {
           onMove={onMove}
           onClearBlocker={onClearBlocker}
           onAnswerDelivered={onAnswerDelivered}
+          onMarkInspectionComplete={onMarkInspectionComplete}
+          onApproveAllPending={onApproveAllPending}
+          onApproveLine={onApproveLine}
+          onMarkPartsOrdered={onMarkPartsOrdered}
+          onMarkLineDone={onMarkLineDone}
+          onMarkLineInRepair={onMarkLineInRepair}
           onTogglePause={() => setRunning((r) => !r)}
           onEnd={finish}
           onDismissToast={() =>

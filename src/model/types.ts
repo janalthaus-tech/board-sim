@@ -50,6 +50,29 @@ export type JobFlag = 'waiting' | 'blocked' | 'urgent';
 /** Magnet-style markers: W=waiter, R=rental, S=shuttle, H=heart car */
 export type JobMarker = 'W' | 'R' | 'S' | 'H';
 
+/** Repair line lifecycle on a VehicleJob */
+export type LineStatus =
+  | 'proposed'
+  | 'pending_approval'
+  | 'approved'
+  | 'declined'
+  | 'parts_ordered'
+  | 'parts_ready'
+  | 'in_repair'
+  | 'done';
+
+export interface RepairLine {
+  id: string;
+  description: string;
+  hours?: number;
+  partsNote?: string;
+  status: LineStatus;
+  /** Absolute sim minute when parts become ready (optional) */
+  partsEtaSimMin?: number;
+  approvedAtSimMin?: number;
+  completedAtSimMin?: number;
+}
+
 export const MARKER_LABELS: Record<JobMarker, string> = {
   W: 'Waiter',
   R: 'Rental',
@@ -91,6 +114,10 @@ export interface VehicleJob {
   promisedToday?: boolean;
   /** Breached 1-hour answer rule */
   lateAnswer?: boolean;
+  /** Multi-point / inspection progress */
+  inspectionStatus?: 'not_started' | 'in_progress' | 'complete';
+  /** Tech-proposed / customer-approved repair lines */
+  repairLines?: RepairLine[];
 }
 
 export type ScenarioEventType =
@@ -213,3 +240,4 @@ export interface NextImportantHint {
   jobId: string | null;
   reason: string;
 }
+
