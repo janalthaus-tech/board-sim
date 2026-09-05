@@ -11,9 +11,10 @@ import { Tutorial } from './Tutorial';
 
 interface Props {
   onStart: (scenarioId: string, pace: PaceId) => void;
+  onWatchDemo?: () => void;
 }
 
-export function Home({ onStart }: Props) {
+export function Home({ onStart, onWatchDemo }: Props) {
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [pace, setPace] = useState<PaceId>(() => loadPace());
 
@@ -35,13 +36,24 @@ export function Home({ onStart }: Props) {
           Train automotive repair shop flow on The Board. Pick a scenario, move jobs through
           Dispatch → Final, and survive timed chaos.
         </p>
-        <button
-          type="button"
-          className="btn btn--primary home__tutorial-btn"
-          onClick={() => setTutorialOpen(true)}
-        >
-          How The Board works
-        </button>
+        <div className="home__cta-row">
+          <button
+            type="button"
+            className="btn btn--primary home__tutorial-btn"
+            onClick={() => setTutorialOpen(true)}
+          >
+            How The Board works
+          </button>
+          {onWatchDemo && (
+            <button
+              type="button"
+              className="btn btn--ghost home__tutorial-btn"
+              onClick={onWatchDemo}
+            >
+              Watch decision demo
+            </button>
+          )}
+        </div>
         <MagnetLegend className="home__legend" />
       </header>
 

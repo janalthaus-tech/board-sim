@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BoardView } from './components/BoardView';
+import { DecisionDemo } from './components/DecisionDemo';
 import { Debrief } from './components/Debrief';
 import { Home } from './components/Home';
 import { hasSeenTutorial, Tutorial } from './components/Tutorial';
@@ -21,6 +22,10 @@ import {
   type SpeedMul,
 } from './model';
 
+const DEMO_SCENARIO_ID = 'morning-rush';
+const DEMO_TOAST =
+  'Demo event: Walk-in waiting in lobby — check Dispatch and the earliest W timer.';
+
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>('home');
   const [scenario, setScenario] = useState<Scenario | null>(null);
@@ -30,6 +35,7 @@ export default function App() {
   const [stats, setStats] = useState<DebriefStats | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [tutorialMarkSeen, setTutorialMarkSeen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   const [pace, setPace] = useState<PaceId>('easy');
   const [speedMul, setSpeedMul] = useState<SpeedMul>(1);
   const rafRef = useRef<number | null>(null);
@@ -94,6 +100,7 @@ export default function App() {
     setEngine(snap);
     setSelectedId(null);
     setStats(null);
+    setDemoOpen(false);
     setScreen('board');
     const firstTime = !hasSeenTutorial();
     if (firstTime) {
@@ -105,21 +112,78 @@ export default function App() {
     }
   };
 
+  const beginDecisionDemo = () => {
+    const base = getScenario(DEMO_SCENARIO_ID);
+    if (!base) return;
+    const sc = applyPace(base, 'easy');
+    const snap = startScenario(sc);
+    setPace('easy');
+    setSpeedMul(0.5);
+    setScenario(sc);
+    setEngine({ ...snap, toast: DEMO_TOAST });
+    setSelectedId(null);
+    setStats(null);
+    setTutorialOpen(false);
+    setDemoOpen(true);
+    setRunning(false);
+    setScreen('board');
+  };
+
+  const selectDemoWaiter = useCallback(() => {
+    const en = engineRef.current;
+    if (!en) return;
+    const waiter =
+      en.board.jobs.find(
+        (j) => j.markers?.includes('W') && j.waiterTimerMin != null,
+      ) ?? en.board.jobs.find((j) => j.markers?.includes('W'));
+    if (waiter) setSelectedId(waiter.id);
+  }, []);
+
   const openTutorial = () => {
     setTutorialMarkSeen(false);
     setRunning(false);
     setTutorialOpen(true);
   };
 
+  const openDemoFromBoard = () => {
+    setRunning(false);
+    setSpeedMul(0.5);
+    setEngine((prev) => (prev ? { ...prev, toast: DEMO_TOAST } : prev));
+    setDemoOpen(true);
+  };
+
   const closeTutorial = () => {
     setTutorialOpen(false);
     setTutorialMarkSeen(false);
-    if (screen === 'board' && scenario && engine && !engine.simMin) {
-      // Resume after first-run tutorial (or reopen at start)
-      setRunning(true);
-    } else if (screen === 'board') {
+    if (demoOpen) return;
+    if (screen === 'board' && scenario && engine) {
       setRunning(true);
     }
+  };
+
+  const closeDemoSkip = () => {
+    setDemoOpen(false);
+    setRunning(false);
+    setScreen('home');
+    setScenario(null);
+    setEngine(null);
+    setSelectedId(null);
+  };
+
+  const closeDemoPlay = () => {
+    setDemoOpen(false);
+    setSpeedMul(1);
+    setEngine((prev) => (prev ? { ...prev, toast: null } : prev));
+    setRunning(true);
+  };
+
+  const closeDemoHome = () => {
+    setDemoOpen(false);
+    setRunning(false);
+    setScreen('home');
+    setScenario(null);
+    setEngine(null);
+    setSelectedId(null);
   };
 
   const onMove = (jobId: string, column: BoardColumnId) => {
@@ -158,7 +222,7 @@ export default function App() {
   };
 
   if (screen === 'home') {
-    return <Home onStart={begin} />;
+    return <Home onStart={begin} onWatchDemo={beginDecisionDemo} />;
   }
 
   if (screen === 'debrief' && scenario && stats && engine) {
@@ -204,20 +268,30 @@ export default function App() {
           }
           onHome={() => {
             setRunning(false);
+            setDemoOpen(false);
             setScreen('home');
             setScenario(null);
             setEngine(null);
           }}
           onOpenTutorial={openTutorial}
+          onOpenDemo={openDemoFromBoard}
+          demoMode={demoOpen}
         />
         <Tutorial
           open={tutorialOpen}
           onClose={closeTutorial}
           markSeen={tutorialMarkSeen}
         />
+        <DecisionDemo
+          open={demoOpen}
+          onSelectWaiter={selectDemoWaiter}
+          onFinishPlay={closeDemoPlay}
+          onFinishHome={closeDemoHome}
+          onSkip={closeDemoSkip}
+        />
       </>
     );
   }
 
-  return <Home onStart={begin} />;
+  return <Home onStart={begin} onWatchDemo={beginDecisionDemo} />;
 }

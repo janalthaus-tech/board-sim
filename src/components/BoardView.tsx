@@ -37,6 +37,9 @@ interface Props {
   onDismissToast: () => void;
   onHome: () => void;
   onOpenTutorial?: () => void;
+  onOpenDemo?: () => void;
+  /** Force full HUD + sticky toast for decision demo */
+  demoMode?: boolean;
   speedMul: SpeedMul;
   onSpeedMul: (mul: SpeedMul) => void;
 }
@@ -74,6 +77,8 @@ export function BoardView({
   onDismissToast,
   onHome,
   onOpenTutorial,
+  onOpenDemo,
+  demoMode = false,
   speedMul,
   onSpeedMul,
 }: Props) {
@@ -139,13 +144,14 @@ export function BoardView({
     '(orientation: landscape) and (max-height: 500px)',
   );
   const [hudExpanded, setHudExpanded] = useState(false);
-  const showFullHud = !compactHudMode || (hudExpanded && !landscapeShort);
+  const showFullHud =
+    demoMode || !compactHudMode || (hudExpanded && !landscapeShort);
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || demoMode) return;
     const t = window.setTimeout(() => onDismissToast(), 4200);
     return () => window.clearTimeout(t);
-  }, [toast, onDismissToast]);
+  }, [toast, onDismissToast, demoMode]);
 
   return (
     <div className="board-screen">
@@ -180,11 +186,23 @@ export function BoardView({
               ?
             </button>
           )}
+          {onOpenDemo && (
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={onOpenDemo}
+              title="Watch decision demo"
+              aria-label="Watch decision demo"
+            >
+              Demo
+            </button>
+          )}
           <div
             className="speed-seg"
             role="radiogroup"
             aria-label="Sim speed multiplier"
             title="Real-time playback speed (independent of Pace)"
+            data-demo="speed"
           >
             {SPEED_MUL_OPTIONS.map((mul) => (
               <button
@@ -267,7 +285,7 @@ export function BoardView({
                 </button>
               </div>
             )}
-            <div className="board-hud__zones">
+            <div className="board-hud__zones" data-demo="zones">
               <span className="hud-zone hud-zone--speed">
                 Speed zone (unsold) · {speedCount}
               </span>
@@ -278,8 +296,10 @@ export function BoardView({
             <div className="board-hud__cue">
               Empty your section — find the bottleneck
             </div>
-            <MagnetLegend compact className="board-hud__legend" />
-            <div className="board-hud__counts">
+            <div data-demo="magnets">
+              <MagnetLegend compact className="board-hud__legend" />
+            </div>
+            <div className="board-hud__counts" data-demo="counts">
               {BOARD_COLUMNS.map((col) => (
                 <span
                   key={col}
@@ -316,7 +336,7 @@ export function BoardView({
             </div>
           </div>
 
-          <div className="board-hud board-hud--goals" aria-label="Flag hours and GP$ sold goals">
+          <div className="board-hud board-hud--goals" aria-label="Flag hours and GP$ sold goals" data-demo="goals">
             <div className="goals-strip__label">
               Flat rate: paid on flag hours · target {goalHours} flag hrs/tech
             </div>
@@ -379,7 +399,7 @@ export function BoardView({
             </div>
           </div>
 
-          <div className="board-hud board-hud--coach" aria-label="Next most important">
+          <div className="board-hud board-hud--coach" aria-label="Next most important" data-demo="next-important">
             <div className="board-hud__next">
               <span className="board-hud__next-label">Next most important</span>
               <span className="board-hud__next-reason">{nextHint.reason}</span>
@@ -398,7 +418,7 @@ export function BoardView({
       )}
 
       {toast && (
-        <div className="toast" role="status">
+        <div className="toast" role="status" data-demo="toast">
           <span className="toast__text">{toast}</span>
           <button type="button" className="btn btn--ghost btn--sm" onClick={onDismissToast}>
             Dismiss
@@ -406,7 +426,7 @@ export function BoardView({
         </div>
       )}
 
-      <div className="board" role="list">
+      <div className="board" role="list" data-demo="columns">
         {BOARD_COLUMNS.map((col) => (
           <Column
             key={col}
