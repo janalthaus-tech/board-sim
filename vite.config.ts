@@ -4,6 +4,6 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   // Relative base so Capacitor WebView can load assets from the file system
-  base: './',
+  base: '/',
   plugins: [react()],
 })
