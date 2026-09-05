@@ -238,6 +238,7 @@ p {
 .board-screen {
   display: flex;
   flex-direction: column;
+  height: 100dvh;
   min-height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
@@ -310,15 +311,26 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin: 0.5rem 1rem 0;
-  padding: 0.75rem 1rem;
+  gap: 0.65rem;
+  margin: 0.35rem 0.75rem 0;
+  padding: 0.45rem 0.75rem;
   background: #1a2236;
   border: 1px solid #3d5a9a;
   border-left: 4px solid var(--accent);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: var(--shadow);
   font-weight: 600;
+  flex-shrink: 0;
+  max-height: 2.6rem;
+}
+
+.toast__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
 }
 
 .board {
@@ -492,10 +504,29 @@ p {
 .movebar {
   border-top: 1px solid var(--border);
   background: #0e1420;
-  padding: 0.65rem 1rem 0.85rem;
+  padding: 0.65rem 1rem;
+  padding-bottom: max(0.85rem, env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  flex-shrink: 0;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.movebar--hint {
+  padding-top: 0.55rem;
+  padding-bottom: max(0.7rem, env(safe-area-inset-bottom, 0px));
+}
+
+.movebar__hint {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .movebar__info {
@@ -632,13 +663,7 @@ p {
   margin-top: 1.25rem;
 }
 
-@media (max-width: 900px) {
-  .topbar__clock {
-    order: 3;
-    width: 100%;
-    align-items: stretch;
-  }
-}
+/* topbar mobile rules consolidated below */
 
 @media (min-width: 1200px) {
   .column {
@@ -746,6 +771,7 @@ p {
   border-bottom: 1px solid var(--border);
   background: #0c121c;
   font-size: 0.78rem;
+  flex-shrink: 0;
 }
 
 .board-hud__cue {
@@ -825,12 +851,7 @@ p {
   background: #3f1d1d;
 }
 
-@media (max-width: 900px) {
-  .board-hud__hours {
-    margin-left: 0;
-    width: 100%;
-  }
-}
+/* board-hud mobile rules consolidated below */
 
 /* Zone labels / sold vs unsold */
 .column__titles {
@@ -1332,4 +1353,261 @@ p {
 
 .footer__note {
   margin: 0;
+}
+
+
+/* —— Mobile / short viewport board layout —— */
+.board-hud--compact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  padding: 0.35rem 0.75rem;
+  flex-shrink: 0;
+}
+
+.board-hud__compact-main {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.board-hud__compact-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.board-hud__next-reason--compact {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.board-hud__compact-toolbar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.board-hud__stats-toggle {
+  min-height: 32px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.78rem;
+}
+
+.topbar__titles {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    gap: 0.4rem 0.55rem;
+    padding: 0.4rem 0.55rem;
+    align-items: center;
+  }
+
+  .topbar__left {
+    gap: 0.4rem;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .topbar__titles .eyebrow {
+    display: none;
+  }
+
+  .topbar__title {
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 42vw;
+  }
+
+  .topbar__clock {
+    order: 0;
+    width: auto;
+    min-width: 0;
+    flex: 0 1 auto;
+    align-items: flex-start;
+    gap: 0.05rem;
+  }
+
+  .clock__time {
+    font-size: 1.05rem;
+  }
+
+  .clock__meta {
+    font-size: 0.65rem;
+    white-space: nowrap;
+  }
+
+  .clock__bar {
+    height: 4px;
+    margin-top: 0.1rem;
+    min-width: 4.5rem;
+  }
+
+  .topbar__actions {
+    gap: 0.3rem;
+    flex-shrink: 0;
+  }
+
+  .topbar__actions .btn--sm {
+    min-height: 34px;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.78rem;
+  }
+
+  .btn--help {
+    min-width: 34px;
+    min-height: 34px;
+    font-size: 0.95rem;
+  }
+
+  .board-hud {
+    padding: 0.35rem 0.65rem;
+    gap: 0.35rem 0.55rem;
+  }
+
+  .board-hud__hours {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .board-hud--goals {
+    gap: 0.35rem;
+  }
+
+  .board {
+    padding: 0.45rem 0.55rem 0.35rem;
+    gap: 0.55rem;
+  }
+
+  .column {
+    flex: 0 0 min(200px, 72vw);
+  }
+
+  .toast {
+    margin: 0.25rem 0.55rem 0;
+    padding: 0.35rem 0.55rem;
+  }
+
+  .movebar {
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
+
+  .movebar__actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.15rem;
+  }
+
+  .movebar__actions .btn--sm {
+    flex: 0 0 auto;
+    min-height: 36px;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.55rem;
+  }
+}
+
+@media (max-height: 500px) {
+  .topbar {
+    gap: 0.3rem 0.45rem;
+    padding: 0.28rem 0.5rem;
+  }
+
+  .topbar__titles .eyebrow {
+    display: none;
+  }
+
+  .topbar__title {
+    font-size: 0.85rem;
+  }
+
+  .clock__time {
+    font-size: 0.95rem;
+  }
+
+  .clock__meta {
+    font-size: 0.6rem;
+  }
+
+  .clock__bar {
+    height: 3px;
+    margin-top: 0;
+  }
+
+  .topbar__actions .btn--sm,
+  .btn--help {
+    min-height: 30px;
+    min-width: 30px;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.72rem;
+  }
+
+  .board-hud--compact {
+    padding: 0.25rem 0.55rem;
+  }
+
+  .board {
+    padding: 0.35rem 0.45rem;
+  }
+
+  .column__header {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .toast {
+    max-height: 2.1rem;
+    margin: 0.15rem 0.45rem 0;
+  }
+
+  .movebar {
+    padding-top: 0.4rem;
+    padding-bottom: max(0.55rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .movebar__info {
+    font-size: 0.8rem;
+    gap: 0.35rem 0.65rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .topbar {
+    flex-wrap: nowrap;
+    padding: 0.22rem 0.45rem;
+  }
+
+  .topbar__clock {
+    order: 0;
+    width: auto;
+  }
+
+  .board-hud--goals,
+  .board-hud--coach,
+  .board-hud__legend {
+    display: none;
+  }
+
+  .board {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .column {
+    flex: 0 0 min(180px, 42vw);
+  }
 }

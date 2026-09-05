@@ -142,7 +142,13 @@ export function MoveBar({
   onClearBlocker,
   onAnswerDelivered,
 }: MoveBarProps) {
-  if (!job) return null;
+  if (!job) {
+    return (
+      <div className="movebar movebar--hint" role="region" aria-label="Move selected vehicle">
+        <p className="movebar__hint">Tap a card to move</p>
+      </div>
+    );
+  }
   const canDeliverAnswer = job.answerDeliveredAtSimMin == null && job.column !== 'final';
   return (
     <div className="movebar" role="region" aria-label="Move selected vehicle">

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { BoardColumnId, BoardState, FiredEventLog, Scenario } from '../model';
 import {
   BOARD_COLUMNS,
@@ -36,6 +36,22 @@ interface Props {
   onDismissToast: () => void;
   onHome: () => void;
   onOpenTutorial?: () => void;
+}
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setMatches(mq.matches);
+    onChange();
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [query]);
+
+  return matches;
 }
 
 export function BoardView({
@@ -111,6 +127,21 @@ export function BoardView({
   const gsph =
     flagTotal > 0 ? Math.round(gpProg.current / flagTotal) : null;
 
+  const compactHudMode = useMediaQuery(
+    '(max-width: 900px), (max-height: 500px)',
+  );
+  const landscapeShort = useMediaQuery(
+    '(orientation: landscape) and (max-height: 500px)',
+  );
+  const [hudExpanded, setHudExpanded] = useState(false);
+  const showFullHud = !compactHudMode || (hudExpanded && !landscapeShort);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = window.setTimeout(() => onDismissToast(), 4200);
+    return () => window.clearTimeout(t);
+  }, [toast, onDismissToast]);
+
   return (
     <div className="board-screen">
       <header className="topbar">
@@ -118,7 +149,7 @@ export function BoardView({
           <button type="button" className="btn btn--ghost btn--sm" onClick={onHome}>
             ← Exit
           </button>
-          <div>
+          <div className="topbar__titles">
             <p className="eyebrow">Board Sim</p>
             <h1 className="topbar__title">{scenario.title}</h1>
           </div>
@@ -153,138 +184,198 @@ export function BoardView({
         </div>
       </header>
 
-      <div className="board-hud" aria-label="Factory of hours and bottlenecks">
-        <div className="board-hud__zones">
-          <span className="hud-zone hud-zone--speed">
-            Speed zone (unsold) · {speedCount}
-          </span>
-          <span className="hud-zone hud-zone--sold">
-            Sold / production · {soldCount}
-          </span>
-        </div>
-        <div className="board-hud__cue">
-          Empty your section — find the bottleneck
-        </div>
-        <MagnetLegend compact className="board-hud__legend" />
-        <div className="board-hud__counts">
-          {BOARD_COLUMNS.map((col) => (
-            <span
-              key={col}
-              className={`hud-pill ${bottleneck === col ? 'hud-pill--hot' : ''}`}
-              title={COLUMN_LABELS[col]}
-            >
-              {COLUMN_LABELS[col].slice(0, 4)} {counts[col]}
+      {compactHudMode && !showFullHud ? (
+        <div
+          className="board-hud board-hud--compact"
+          aria-label="Compact board status"
+        >
+          <div className="board-hud__compact-main">
+            <span className="board-hud__next-label">Next</span>
+            <span className="board-hud__next-reason board-hud__next-reason--compact">
+              {nextHint.reason}
             </span>
-          ))}
-        </div>
-        <div className="board-hud__hours">
-          <span>
-            Parts+WIP: <strong>{hours.total.toFixed(1)}h</strong>
-          </span>
-          {hours.byTech.length > 0 && (
-            <span className="board-hud__techs">
-              {hours.byTech.map((t) => (
-                <span key={t.tech} className="hud-pill hud-pill--tech">
-                  {t.tech} {t.hours.toFixed(1)}h
-                </span>
-              ))}
-            </span>
-          )}
-          {waiterCount > 0 && (
-            <span className="hud-pill hud-pill--waiter">
-              W×{waiterCount} on board
-            </span>
-          )}
-          {lateAnswerCount > 0 && (
-            <span className="hud-pill hud-pill--late">
-              Late ans ×{lateAnswerCount}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="board-hud board-hud--goals" aria-label="Flag hours and GP$ sold goals">
-        <div className="goals-strip__label">
-          Flat rate: paid on flag hours · target {goalHours} flag hrs/tech
-        </div>
-        <div className="goals-strip__techs">
-          <span className="goals-strip__heading">Flag hrs / tech</span>
-          {techProg.length === 0 ? (
-            <span className="hud-pill">No techs assigned yet</span>
-          ) : (
-            techProg.map((t) => (
-              <span
-                key={t.tech}
-                className={`hud-pill hud-pill--flag ${t.hit ? 'hud-pill--goal-hit' : 'hud-pill--goal-miss'}`}
-                title={
-                  (t.payEstimate != null
-                    ? `Est. flat-rate pay $${t.payEstimate.toFixed(0)}`
-                    : '') +
-                  (t.efficiencyPct != null
-                    ? ` · Eff ${t.efficiencyPct.toFixed(0)}%`
-                    : '')
-                }
+            {nextHint.jobId && (
+              <button
+                type="button"
+                className="btn btn--sm btn--ghost"
+                onClick={() => onSelect(nextHint.jobId)}
               >
-                <span className="flag-pill__main">
-                  {t.tech} {t.hours.toFixed(1)} / {t.goal.toFixed(1)} flag
-                </span>
-                {t.payEstimate != null && (
-                  <span className="flag-pill__pay">
-                    ${t.payEstimate.toFixed(0)}
-                  </span>
-                )}
-                {t.efficiencyPct != null && (
-                  <span className="flag-pill__eff">
-                    {t.efficiencyPct.toFixed(0)}%
-                  </span>
-                )}
-              </span>
-            ))
-          )}
-        </div>
-        <div className="goals-strip__gp">
-          <div className="goals-strip__gp-meta">
-            <span className="goals-strip__heading">GP$ sold</span>
-            <strong>
-              ${gpProg.current.toLocaleString()} / ${gpProg.target.toLocaleString()}
-            </strong>
-            {gsph != null && (
-              <span className="goals-strip__gsph" title="Gross sales per flag hour">
-                GSPH ~${gsph.toLocaleString()}
-                {scenario.goals?.gsphHint != null
-                  ? ` (hint $${scenario.goals.gsphHint})`
-                  : ''}
-              </span>
+                Select
+              </button>
             )}
           </div>
-          <div className="goals-bar" aria-hidden>
-            <div
-              className={`goals-bar__fill ${gpProg.met ? 'goals-bar__fill--met' : ''}`}
-              style={{ width: `${gpPct}%` }}
-            />
+          <div className="board-hud__compact-meta">
+            {bottleneck && (
+              <span className="hud-pill hud-pill--hot" title="Bottleneck column">
+                Bottleneck {COLUMN_LABELS[bottleneck].slice(0, 6)}
+              </span>
+            )}
+            {waiterCount > 0 && (
+              <span className="hud-pill hud-pill--waiter">W×{waiterCount}</span>
+            )}
+            {lateAnswerCount > 0 && (
+              <span className="hud-pill hud-pill--late">Late×{lateAnswerCount}</span>
+            )}
+            {!landscapeShort && (
+              <button
+                type="button"
+                className="btn btn--sm btn--ghost board-hud__stats-toggle"
+                aria-expanded={false}
+                onClick={() => setHudExpanded(true)}
+              >
+                Stats
+              </button>
+            )}
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="board-hud" aria-label="Factory of hours and bottlenecks">
+            {compactHudMode && (
+              <div className="board-hud__compact-toolbar">
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost board-hud__stats-toggle"
+                  aria-expanded={true}
+                  onClick={() => setHudExpanded(false)}
+                >
+                  Hide stats
+                </button>
+              </div>
+            )}
+            <div className="board-hud__zones">
+              <span className="hud-zone hud-zone--speed">
+                Speed zone (unsold) · {speedCount}
+              </span>
+              <span className="hud-zone hud-zone--sold">
+                Sold / production · {soldCount}
+              </span>
+            </div>
+            <div className="board-hud__cue">
+              Empty your section — find the bottleneck
+            </div>
+            <MagnetLegend compact className="board-hud__legend" />
+            <div className="board-hud__counts">
+              {BOARD_COLUMNS.map((col) => (
+                <span
+                  key={col}
+                  className={`hud-pill ${bottleneck === col ? 'hud-pill--hot' : ''}`}
+                  title={COLUMN_LABELS[col]}
+                >
+                  {COLUMN_LABELS[col].slice(0, 4)} {counts[col]}
+                </span>
+              ))}
+            </div>
+            <div className="board-hud__hours">
+              <span>
+                Parts+WIP: <strong>{hours.total.toFixed(1)}h</strong>
+              </span>
+              {hours.byTech.length > 0 && (
+                <span className="board-hud__techs">
+                  {hours.byTech.map((t) => (
+                    <span key={t.tech} className="hud-pill hud-pill--tech">
+                      {t.tech} {t.hours.toFixed(1)}h
+                    </span>
+                  ))}
+                </span>
+              )}
+              {waiterCount > 0 && (
+                <span className="hud-pill hud-pill--waiter">
+                  W×{waiterCount} on board
+                </span>
+              )}
+              {lateAnswerCount > 0 && (
+                <span className="hud-pill hud-pill--late">
+                  Late ans ×{lateAnswerCount}
+                </span>
+              )}
+            </div>
+          </div>
 
-      <div className="board-hud board-hud--coach" aria-label="Next most important">
-        <div className="board-hud__next">
-          <span className="board-hud__next-label">Next most important</span>
-          <span className="board-hud__next-reason">{nextHint.reason}</span>
-          {nextHint.jobId && (
-            <button
-              type="button"
-              className="btn btn--sm btn--ghost"
-              onClick={() => onSelect(nextHint.jobId)}
-            >
-              Select
-            </button>
-          )}
-        </div>
-      </div>
+          <div className="board-hud board-hud--goals" aria-label="Flag hours and GP$ sold goals">
+            <div className="goals-strip__label">
+              Flat rate: paid on flag hours · target {goalHours} flag hrs/tech
+            </div>
+            <div className="goals-strip__techs">
+              <span className="goals-strip__heading">Flag hrs / tech</span>
+              {techProg.length === 0 ? (
+                <span className="hud-pill">No techs assigned yet</span>
+              ) : (
+                techProg.map((t) => (
+                  <span
+                    key={t.tech}
+                    className={`hud-pill hud-pill--flag ${t.hit ? 'hud-pill--goal-hit' : 'hud-pill--goal-miss'}`}
+                    title={
+                      (t.payEstimate != null
+                        ? `Est. flat-rate pay $${t.payEstimate.toFixed(0)}`
+                        : '') +
+                      (t.efficiencyPct != null
+                        ? ` · Eff ${t.efficiencyPct.toFixed(0)}%`
+                        : '')
+                    }
+                  >
+                    <span className="flag-pill__main">
+                      {t.tech} {t.hours.toFixed(1)} / {t.goal.toFixed(1)} flag
+                    </span>
+                    {t.payEstimate != null && (
+                      <span className="flag-pill__pay">
+                        ${t.payEstimate.toFixed(0)}
+                      </span>
+                    )}
+                    {t.efficiencyPct != null && (
+                      <span className="flag-pill__eff">
+                        {t.efficiencyPct.toFixed(0)}%
+                      </span>
+                    )}
+                  </span>
+                ))
+              )}
+            </div>
+            <div className="goals-strip__gp">
+              <div className="goals-strip__gp-meta">
+                <span className="goals-strip__heading">GP$ sold</span>
+                <strong>
+                  ${gpProg.current.toLocaleString()} / ${gpProg.target.toLocaleString()}
+                </strong>
+                {gsph != null && (
+                  <span className="goals-strip__gsph" title="Gross sales per flag hour">
+                    GSPH ~${gsph.toLocaleString()}
+                    {scenario.goals?.gsphHint != null
+                      ? ` (hint $${scenario.goals.gsphHint})`
+                      : ''}
+                  </span>
+                )}
+              </div>
+              <div className="goals-bar" aria-hidden>
+                <div
+                  className={`goals-bar__fill ${gpProg.met ? 'goals-bar__fill--met' : ''}`}
+                  style={{ width: `${gpPct}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="board-hud board-hud--coach" aria-label="Next most important">
+            <div className="board-hud__next">
+              <span className="board-hud__next-label">Next most important</span>
+              <span className="board-hud__next-reason">{nextHint.reason}</span>
+              {nextHint.jobId && (
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={() => onSelect(nextHint.jobId)}
+                >
+                  Select
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {toast && (
         <div className="toast" role="status">
-          <span>{toast}</span>
+          <span className="toast__text">{toast}</span>
           <button type="button" className="btn btn--ghost btn--sm" onClick={onDismissToast}>
             Dismiss
           </button>
