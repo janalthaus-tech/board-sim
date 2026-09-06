@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BoardView } from './components/BoardView';
-import { DecisionDemo } from './components/DecisionDemo';
+import { DecisionDemo, type DemoTarget } from './components/DecisionDemo';
 import { Debrief } from './components/Debrief';
 import { Home, type StartOptions } from './components/Home';
 import { hasSeenTutorial, Tutorial } from './components/Tutorial';
@@ -47,6 +47,7 @@ export default function App() {
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [tutorialMarkSeen, setTutorialMarkSeen] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
+  const [demoFocus, setDemoFocus] = useState<DemoTarget | null>(null);
   const [pace, setPace] = useState<PaceId>('easy');
   const [speedMul, setSpeedMul] = useState<SpeedMul>(1);
   const [repairDetailEnabled, setRepairDetailEnabled] = useState(() =>
@@ -191,6 +192,7 @@ export default function App() {
 
   const closeDemoSkip = () => {
     setDemoOpen(false);
+    setDemoFocus(null);
     setRunning(false);
     setScreen('home');
     setScenario(null);
@@ -200,6 +202,7 @@ export default function App() {
 
   const closeDemoPlay = () => {
     setDemoOpen(false);
+    setDemoFocus(null);
     setSpeedMul(1);
     setEngine((prev) => (prev ? { ...prev, toast: null } : prev));
     setRunning(true);
@@ -207,6 +210,7 @@ export default function App() {
 
   const closeDemoHome = () => {
     setDemoOpen(false);
+    setDemoFocus(null);
     setRunning(false);
     setScreen('home');
     setScenario(null);
@@ -398,6 +402,7 @@ export default function App() {
           onHome={() => {
             setRunning(false);
             setDemoOpen(false);
+            setDemoFocus(null);
             setScreen('home');
             setScenario(null);
             setEngine(null);
@@ -405,6 +410,7 @@ export default function App() {
           onOpenTutorial={openTutorial}
           onOpenDemo={openDemoFromBoard}
           demoMode={demoOpen}
+          demoFocus={demoOpen ? demoFocus : null}
         />
         <Tutorial
           open={tutorialOpen}
@@ -417,6 +423,7 @@ export default function App() {
           onEnsureRepairDetail={ensureRepairDetail}
           onSelectWaiter={selectDemoWaiter}
           onClearSelection={() => setSelectedId(null)}
+          onFocusChange={setDemoFocus}
           onFinishPlay={closeDemoPlay}
           onFinishHome={closeDemoHome}
           onSkip={closeDemoSkip}

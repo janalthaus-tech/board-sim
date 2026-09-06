@@ -27,6 +27,7 @@ import {
   totalFlagHours,
 } from '../model';
 import { Column } from './Column';
+import type { DemoTarget } from './DecisionDemo';
 import { JobDetail } from './JobDetail';
 import { MagnetLegend } from './MagnetLegend';
 import { MoveBar } from './VehicleCard';
@@ -55,8 +56,10 @@ interface Props {
   onHome: () => void;
   onOpenTutorial?: () => void;
   onOpenDemo?: () => void;
-  /** Force full HUD + sticky toast for decision demo */
+  /** Decision demo active — toast stays sticky; HUD is focus-driven */
   demoMode?: boolean;
+  /** Which demo target is spotlighted; drives per-step HUD focus on phones */
+  demoFocus?: DemoTarget | null;
   speedMul: SpeedMul;
   onSpeedMul: (mul: SpeedMul) => void;
   repairDetailEnabled: boolean;
@@ -80,6 +83,14 @@ function useMediaQuery(query: string): boolean {
 
   return matches;
 }
+
+const DEMO_SECTION_FOCUSES = new Set<DemoTarget>([
+  'zones',
+  'magnets',
+  'counts',
+  'goals',
+  'next-important',
+]);
 
 export function BoardView({
   scenario,
@@ -106,6 +117,7 @@ export function BoardView({
   onOpenTutorial,
   onOpenDemo,
   demoMode = false,
+  demoFocus = null,
   speedMul,
   onSpeedMul,
   repairDetailEnabled,
@@ -175,8 +187,15 @@ export function BoardView({
     '(orientation: landscape) and (max-height: 500px)',
   );
   const [hudExpanded, setHudExpanded] = useState(false);
+
+  const demoSectionFocus =
+    demoMode && demoFocus && DEMO_SECTION_FOCUSES.has(demoFocus)
+      ? demoFocus
+      : null;
+
+  // Never force the tall full HUD open for the whole demo on phones.
   const showFullHud =
-    demoMode || !compactHudMode || (hudExpanded && !landscapeShort);
+    !demoMode && (!compactHudMode || (hudExpanded && !landscapeShort));
 
   const emphasizeManager =
     role === 'manager' || role === 'full';
@@ -194,7 +213,15 @@ export function BoardView({
 
   return (
     <div
-      className={`board-screen board-screen--role-${role}${detailOpen ? ' board-screen--detail-open' : ''}`}
+      className={[
+        'board-screen',
+        `board-screen--role-${role}`,
+        detailOpen ? 'board-screen--detail-open' : '',
+        demoMode ? 'board-screen--demo' : '',
+        demoMode && demoFocus ? `board-screen--demo-${demoFocus}` : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <header className="topbar">
         <div className="topbar__left">
@@ -278,7 +305,157 @@ export function BoardView({
         </div>
       </header>
 
-      {compactHudMode && !showFullHud ? (
+      {demoMode ? (
+        demoSectionFocus === 'zones' ? (
+          <div
+            className="board-hud board-hud--demo-focus"
+            aria-label="Speed zone vs Sold"
+          >
+            <div className="board-hud__zones" data-demo="zones">
+              <span className="hud-zone hud-zone--speed">
+                Speed zone (unsold) · {speedCount}
+              </span>
+              <span className="hud-zone hud-zone--sold">
+                Sold / production · {soldCount}
+              </span>
+            </div>
+          </div>
+        ) : demoSectionFocus === 'magnets' ? (
+          <div
+            className="board-hud board-hud--demo-focus"
+            aria-label="Magnet markers"
+            data-demo="magnets"
+          >
+            <MagnetLegend compact className="board-hud__legend" />
+          </div>
+        ) : demoSectionFocus === 'counts' ? (
+          <div
+            className={`board-hud board-hud--demo-focus ${role === 'manager' ? 'board-hud__counts--emphasize' : ''}`}
+            aria-label="Column pills"
+            data-demo="counts"
+          >
+            <div className="board-hud__counts">
+              {BOARD_COLUMNS.map((col) => (
+                <span
+                  key={col}
+                  className={`hud-pill ${bottleneck === col ? 'hud-pill--hot' : ''} ${
+                    emphasizeAdvisor &&
+                    (col === 'dispatch' || col === 'inspection' || col === 'approval')
+                      ? 'hud-pill--role-focus'
+                      : ''
+                  } ${
+                    emphasizeTech &&
+                    (col === 'inspection' ||
+                      col === 'parts' ||
+                      col === 'wip' ||
+                      col === 'qc')
+                      ? 'hud-pill--role-focus'
+                      : ''
+                  }`}
+                  title={COLUMN_LABELS[col]}
+                >
+                  {COLUMN_LABELS[col].slice(0, 4)} {counts[col]}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : demoSectionFocus === 'goals' ? (
+          <div
+            className={`board-hud board-hud--goals board-hud--demo-focus ${role === 'manager' ? 'board-hud--goals-emphasize' : ''}`}
+            aria-label="Flag hours and GP$ sold goals"
+            data-demo="goals"
+          >
+            <div className="goals-strip__label">
+              Flat rate: paid on flag hours · target {goalHours} flag hrs/tech
+            </div>
+            <div className="goals-strip__techs">
+              <span className="goals-strip__heading">Flag hrs / tech</span>
+              {techProg.length === 0 ? (
+                <span className="hud-pill">No techs assigned yet</span>
+              ) : (
+                techProg.map((t) => (
+                  <span
+                    key={t.tech}
+                    className={`hud-pill hud-pill--flag ${t.hit ? 'hud-pill--goal-hit' : 'hud-pill--goal-miss'}`}
+                    title={
+                      (t.payEstimate != null
+                        ? `Est. flat-rate pay $${t.payEstimate.toFixed(0)}`
+                        : '') +
+                      (t.efficiencyPct != null
+                        ? ` · Eff ${t.efficiencyPct.toFixed(0)}%`
+                        : '')
+                    }
+                  >
+                    <span className="flag-pill__main">
+                      {t.tech} {t.hours.toFixed(1)} / {t.goal.toFixed(1)} flag
+                    </span>
+                    {t.payEstimate != null && (
+                      <span className="flag-pill__pay">
+                        ${t.payEstimate.toFixed(0)}
+                      </span>
+                    )}
+                    {t.efficiencyPct != null && (
+                      <span className="flag-pill__eff">
+                        {t.efficiencyPct.toFixed(0)}%
+                      </span>
+                    )}
+                  </span>
+                ))
+              )}
+            </div>
+            <div className="goals-strip__gp">
+              <div className="goals-strip__gp-meta">
+                <span className="goals-strip__heading">GP$ sold</span>
+                <strong>
+                  ${gpProg.current.toLocaleString()} / ${gpProg.target.toLocaleString()}
+                </strong>
+                {gsph != null && (
+                  <span className="goals-strip__gsph" title="Gross sales per flag hour">
+                    GSPH ~${gsph.toLocaleString()}
+                    {scenario.goals?.gsphHint != null
+                      ? ` (hint $${scenario.goals.gsphHint})`
+                      : ''}
+                  </span>
+                )}
+              </div>
+              <div className="goals-bar" aria-hidden>
+                <div
+                  className={`goals-bar__fill ${gpProg.met ? 'goals-bar__fill--met' : ''}`}
+                  style={{ width: `${gpPct}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : demoSectionFocus === 'next-important' ? (
+          <div
+            className={`board-hud board-hud--coach board-hud--demo-focus ${role === 'manager' ? 'board-hud--coach-emphasize' : ''}`}
+            aria-label="Next most important"
+            data-demo="next-important"
+          >
+            <div className="board-hud__next">
+              <span className="board-hud__next-label">
+                {role === 'manager'
+                  ? 'Next most important (manager)'
+                  : role === 'advisor'
+                    ? 'Next most important (advisor)'
+                    : role === 'technician'
+                      ? 'Next most important (tech)'
+                      : 'Next most important'}
+              </span>
+              <span className="board-hud__next-reason">{nextHint.reason}</span>
+              {nextHint.jobId && (
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={() => onSelect(nextHint.jobId)}
+                >
+                  Select
+                </button>
+              )}
+            </div>
+          </div>
+        ) : null
+      ) : compactHudMode && !showFullHud ? (
         <div
           className="board-hud board-hud--compact"
           aria-label="Compact board status"
@@ -548,7 +725,11 @@ export function BoardView({
       )}
 
       {toast && (
-        <div className="toast" role="status" data-demo="toast">
+        <div
+          className={`toast${demoMode && demoFocus === 'toast' ? ' toast--demo-focus' : ''}`}
+          role="status"
+          data-demo="toast"
+        >
           <span className="toast__text">{toast}</span>
           <button type="button" className="btn btn--ghost btn--sm" onClick={onDismissToast}>
             Dismiss

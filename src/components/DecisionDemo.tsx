@@ -117,6 +117,7 @@ interface Props {
   onEnsureRepairDetail?: () => void;
   onSelectWaiter?: () => void;
   onClearSelection?: () => void;
+  onFocusChange?: (target: DemoTarget | null) => void;
   onFinishPlay: () => void;
   onFinishHome: () => void;
   onSkip: () => void;
@@ -391,6 +392,7 @@ export function DecisionDemo({
   onEnsureRepairDetail,
   onSelectWaiter,
   onClearSelection,
+  onFocusChange,
   onFinishPlay,
   onFinishHome,
   onSkip,
@@ -419,6 +421,14 @@ export function DecisionDemo({
       setSpot(null);
     }
   }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open || done || !current) {
+      onFocusChange?.(null);
+      return;
+    }
+    onFocusChange?.(current.target);
+  }, [open, done, step, current?.target, onFocusChange]);
 
   useEffect(() => {
     if (!open || done || !current) return;
@@ -475,8 +485,21 @@ export function DecisionDemo({
     };
 
     update();
-    const delays =
-      current.needsDetail || current.selectWaiter
+    const hudSection =
+      current.target === 'zones' ||
+      current.target === 'magnets' ||
+      current.target === 'counts' ||
+      current.target === 'goals' ||
+      current.target === 'next-important';
+    const layoutSensitive =
+      hudSection ||
+      current.target === 'job-detail' ||
+      current.target === 'waiter' ||
+      current.target === 'columns' ||
+      current.target === 'toast';
+    const delays = layoutSensitive
+      ? [100, 220, 400, 650, 900, 1200]
+      : current.needsDetail || current.selectWaiter
         ? [50, 140, 280, 480, 750, 1100]
         : [50, 160, 320, 560];
     const timers = delays.map((ms) => window.setTimeout(update, ms));

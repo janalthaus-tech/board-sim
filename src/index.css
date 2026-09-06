@@ -2532,3 +2532,81 @@ body:has(.demo-overlay:not(.demo-overlay--done)) .job-detail {
     min-width: calc(50% - 1px);
   }
 }
+
+
+/* —— Decision demo per-step HUD focus (phones) —— */
+.board-hud--demo-focus {
+  flex-shrink: 0;
+  padding: 0.4rem 0.65rem;
+  gap: 0.3rem 0.5rem;
+}
+
+.board-screen--demo .board-hud--demo-focus .board-hud__run-opts,
+.board-screen--demo .board-hud--demo-focus .board-hud__hours,
+.board-screen--demo .board-hud--demo-focus .board-hud__cue {
+  display: none;
+}
+
+/* Toast step: pin under topbar above coach band */
+.toast--demo-focus,
+.board-screen--demo-toast .toast {
+  position: relative;
+  z-index: 55;
+  margin-top: 0.35rem;
+  max-height: none;
+  white-space: normal;
+}
+
+.board-screen--demo-toast .toast .toast__text {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.board-screen--demo-toast .demo-coach:not(.demo-coach--top) {
+  /* Keep coach at bottom so toast stays visible under topbar */
+}
+
+/* Job detail step: enlarge four-question block; shrink board on phone */
+@media (max-width: 899px) {
+  .board-screen--demo-job-detail.board-screen--detail-open .board-main--with-detail .board {
+    flex: 0 1 4.5rem;
+    min-height: 3.5rem;
+    max-height: 22vh;
+  }
+
+  .board-screen--demo-job-detail.board-screen--detail-open .board-main--with-detail .job-detail {
+    flex: 1 1 auto;
+    max-height: min(58vh, 480px);
+    min-height: 10rem;
+  }
+
+  .board-screen--demo-job-detail [data-demo="repair-status"] {
+    scroll-margin-top: 12px;
+    scroll-margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 899px) and (orientation: landscape) {
+  .board-screen--demo-job-detail.board-screen--detail-open .board-main--with-detail .board {
+    max-height: 18vh;
+    min-height: 2.5rem;
+  }
+
+  .board-screen--demo-job-detail.board-screen--detail-open .board-main--with-detail .job-detail {
+    max-height: min(55vh, 280px);
+    min-height: 7rem;
+  }
+}
+
+/* Waiter / columns: ensure selected card / headers can scroll into view */
+.board-screen--demo-waiter .card--selected,
+.board-screen--demo-columns [data-demo="column-header"] {
+  scroll-margin-top: 12px;
+  scroll-margin-bottom: 12px;
+}
+
+.board-screen--demo-waiter [data-demo="waiter"],
+.board-screen--demo-waiter .card__timer {
+  scroll-margin: 16px;
+}
