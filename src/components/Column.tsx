@@ -56,7 +56,7 @@ export function Column({
         if (id) onDropJob(columnId, id);
       }}
     >
-      <header className="column__header">
+      <header className="column__header" data-demo="column-header">
         <div className="column__titles">
           <h2>
             {COLUMN_LABELS[columnId]}

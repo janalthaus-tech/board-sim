@@ -56,7 +56,7 @@ export function VehicleCard({
   return (
     <article
       className={`card ${selected ? 'card--selected' : ''} ${job.flags.includes('urgent') ? 'card--urgent' : ''} ${job.flags.includes('blocked') ? 'card--blocked' : ''} ${isWaiter ? 'card--waiter' : ''} ${isHeart ? 'card--heart' : ''} ${job.lateAnswer ? 'card--late-answer' : ''} ${highlight ? 'card--next-important' : ''} ${job.promisedToday ? 'card--promised' : ''} ${dimmed ? 'card--dimmed' : ''}`}
-      data-demo={isWaiter && job.waiterTimerMin != null ? 'waiter' : undefined}
+      data-demo={isWaiter && job.waiterTimerMin != null ? 'waiter-card' : undefined}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', job.id);
@@ -90,6 +90,7 @@ export function VehicleCard({
             <span
               className={`card__timer ${timerCritical ? 'card__timer--critical' : ''}`}
               title="Waiter timer (sim min remaining)"
+              data-demo="waiter"
             >
               ⏱ {formatWaiterTimer(job.waiterTimerMin)}
             </span>

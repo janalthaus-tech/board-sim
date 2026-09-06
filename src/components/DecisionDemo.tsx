@@ -70,7 +70,6 @@ const STEPS: DemoStep[] = [
     target: 'repair-chips',
     title: 'Inspection → approval → parts → repair',
     body: 'Card chips answer the four shop questions: Is inspection done? What did the customer approve? Are parts available (and when)? Is the repair complete? (Repair detail is turned on for this step if it was off.)',
-    selectWaiter: true,
     needsDetail: true,
   },
   {
@@ -89,7 +88,7 @@ const STEPS: DemoStep[] = [
   {
     target: 'speed',
     title: 'Pace + 0.5× while learning',
-    body: 'Easy pace buys real-time thinking room. Drop to 0.5× when you’re learning indicators — turn speed back up once the HUD feels automatic.',
+    body: 'Easy pace buys real-time thinking room. Use the 0.5× / 1× / 1.5× control in the top bar while learning indicators — turn speed back up once the HUD feels automatic.',
   },
 ];
 
@@ -106,25 +105,115 @@ interface Props {
   /** Temporarily turn detail on so demo steps that need chips/sheet can spotlight them */
   onEnsureRepairDetail?: () => void;
   onSelectWaiter?: () => void;
+  /** Clear card selection so JobDetail doesn’t cover chip / column focus */
+  onClearSelection?: () => void;
   onFinishPlay: () => void;
   onFinishHome: () => void;
   onSkip: () => void;
 }
 
+function isUsable(el: Element): boolean {
+  const r = el.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return false;
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+  // Must intersect the viewport at least a little
+  if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) return false;
+  return true;
+}
+
+function pickBest(nodes: Element[]): Element | null {
+  const usable = nodes.filter(isUsable);
+  if (usable.length === 0) return nodes[0] ?? null;
+  // Prefer selected card descendants, then largest visible area
+  const selected = usable.find((el) => el.closest('.card--selected'));
+  if (selected) return selected;
+  return usable.reduce((best, el) => {
+    const a = el.getBoundingClientRect();
+    const b = best.getBoundingClientRect();
+    const areaA = Math.min(a.width, window.innerWidth) * Math.min(a.height, window.innerHeight);
+    const areaB = Math.min(b.width, window.innerWidth) * Math.min(b.height, window.innerHeight);
+    // For chips/timers prefer smaller focused targets over huge boards
+    return areaA < areaB ? el : best;
+  });
+}
+
 function queryTarget(target: DemoTarget): Element | null {
+  if (target === 'columns') {
+    const headers = Array.from(document.querySelectorAll('[data-demo="column-header"]'));
+    if (headers.length > 0) return headers[0]; // measure() unions all headers
+    return document.querySelector('[data-demo="columns"]');
+  }
+  if (target === 'waiter') {
+    const selected =
+      document.querySelector('.card--selected [data-demo="waiter"]') ??
+      document.querySelector('.card--selected[data-demo="waiter"]');
+    if (selected) return selected;
+    return pickBest(Array.from(document.querySelectorAll('[data-demo="waiter"]')));
+  }
+  if (target === 'repair-chips') {
+    const selected = document.querySelector('.card--selected [data-demo="repair-chips"]');
+    if (selected && isUsable(selected)) return selected;
+    // Prefer chips that are on-screen; avoid huge first-in-DOM offscreen cards
+    const chips = Array.from(document.querySelectorAll('[data-demo="repair-chips"]'));
+    const onScreen = chips.filter(isUsable);
+    if (onScreen.length > 0) {
+      // Prefer a card in the speed zone (left columns) when possible
+      const speed = onScreen.find((el) => el.closest('.column--speed'));
+      return speed ?? onScreen[0];
+    }
+    return chips[0] ?? null;
+  }
   return document.querySelector(`[data-demo="${target}"]`);
 }
 
-function measure(el: Element | null): SpotlightRect | null {
+function unionRects(els: Element[]): SpotlightRect | null {
+  const usable = els.filter(isUsable);
+  const list = usable.length > 0 ? usable : els;
+  if (list.length === 0) return null;
+  let top = Infinity;
+  let left = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const el of list) {
+    const r = el.getBoundingClientRect();
+    top = Math.min(top, r.top);
+    left = Math.min(left, r.left);
+    right = Math.max(right, r.right);
+    bottom = Math.max(bottom, r.bottom);
+  }
+  if (!Number.isFinite(top)) return null;
+  const pad = 6;
+  return {
+    top: Math.max(4, top - pad),
+    left: Math.max(4, left - pad),
+    width: Math.min(window.innerWidth - 8, right - left + pad * 2),
+    height: Math.min(window.innerHeight - 8, bottom - top + pad * 2),
+  };
+}
+
+function measure(target: DemoTarget, el: Element | null): SpotlightRect | null {
+  if (target === 'columns') {
+    const headers = Array.from(document.querySelectorAll('[data-demo="column-header"]'));
+    if (headers.length > 0) return unionRects(headers);
+  }
   if (!el) return null;
   const r = el.getBoundingClientRect();
   if (r.width < 2 || r.height < 2) return null;
-  const pad = 6;
+  const pad = target === 'waiter' || target === 'repair-chips' || target === 'speed' ? 8 : 6;
+  // Cap absurdly tall spotlights so coach still frames the idea
+  let height = r.height + pad * 2;
+  let width = r.width + pad * 2;
+  let top = r.top - pad;
+  let left = r.left - pad;
+  if (target === 'job-detail' && height > window.innerHeight * 0.55) {
+    height = window.innerHeight * 0.55;
+  }
   return {
-    top: Math.max(4, r.top - pad),
-    left: Math.max(4, r.left - pad),
-    width: Math.min(window.innerWidth - 8, r.width + pad * 2),
-    height: Math.min(window.innerHeight - 8, r.height + pad * 2),
+    top: Math.max(4, top),
+    left: Math.max(4, left),
+    width: Math.min(window.innerWidth - 8, width),
+    height: Math.min(window.innerHeight - 8, height),
   };
 }
 
@@ -133,6 +222,7 @@ export function DecisionDemo({
   repairDetailEnabled = false,
   onEnsureRepairDetail,
   onSelectWaiter,
+  onClearSelection,
   onFinishPlay,
   onFinishHome,
   onSkip,
@@ -143,11 +233,34 @@ export function DecisionDemo({
 
   const current = STEPS[step];
   const last = step >= STEPS.length - 1;
-  const coachTop =
-    current?.target === 'movebar' ||
-    current?.target === 'job-detail' ||
-    current?.target === 'toast' ||
-    current?.target === 'speed';
+
+  // Keep coach opposite the spotlight so it never covers the described UI
+  const coachTop = (() => {
+    if (!current) return false;
+    // Always top for bottom-of-screen UI
+    if (
+      current.target === 'movebar' ||
+      current.target === 'job-detail' ||
+      current.target === 'toast'
+    ) {
+      return true;
+    }
+    // Always bottom for top-bar / column-header / HUD strip targets
+    if (
+      current.target === 'speed' ||
+      current.target === 'columns' ||
+      current.target === 'zones' ||
+      current.target === 'magnets' ||
+      current.target === 'next-important' ||
+      current.target === 'counts' ||
+      current.target === 'goals'
+    ) {
+      return false;
+    }
+    if (!spot) return false;
+    const mid = spot.top + spot.height / 2;
+    return mid > window.innerHeight * 0.48;
+  })();
 
   useEffect(() => {
     if (!open) {
@@ -158,9 +271,14 @@ export function DecisionDemo({
   }, [open]);
 
   useEffect(() => {
-    if (!open || done || !current?.selectWaiter) return;
-    onSelectWaiter?.();
-  }, [open, done, step, current?.selectWaiter, onSelectWaiter]);
+    if (!open || done || !current) return;
+    if (current.selectWaiter) {
+      onSelectWaiter?.();
+    } else {
+      // Keep JobDetail closed so card chips / columns stay visible
+      onClearSelection?.();
+    }
+  }, [open, done, step, current?.selectWaiter, onSelectWaiter, onClearSelection]);
 
   // Temporarily enable repair detail for chip / sheet steps
   useEffect(() => {
@@ -176,7 +294,7 @@ export function DecisionDemo({
   ]);
 
   useLayoutEffect(() => {
-    if (!open || done) {
+    if (!open || done || !current) {
       setSpot(null);
       return;
     }
@@ -185,11 +303,17 @@ export function DecisionDemo({
     const update = () => {
       if (cancelled) return;
       const el = queryTarget(current.target);
-      setSpot(measure(el));
-      if (el && 'scrollIntoView' in el) {
+      setSpot(measure(current.target, el));
+      const scrollEl =
+        current.target === 'waiter'
+          ? (document.querySelector('.card--selected') ??
+            document.querySelector('[data-demo="waiter-card"]') ??
+            el)
+          : el;
+      if (scrollEl && 'scrollIntoView' in scrollEl) {
         try {
-          (el as HTMLElement).scrollIntoView({
-            block: 'nearest',
+          (scrollEl as HTMLElement).scrollIntoView({
+            block: 'center',
             inline: 'nearest',
             behavior: 'smooth',
           });
@@ -197,18 +321,34 @@ export function DecisionDemo({
           /* ignore */
         }
       }
+      // Also scroll column headers into view for the track step
+      if (current.target === 'columns') {
+        const first = document.querySelector('[data-demo="column-header"]');
+        if (first && 'scrollIntoView' in first) {
+          try {
+            (first as HTMLElement).scrollIntoView({
+              block: 'nearest',
+              inline: 'nearest',
+              behavior: 'smooth',
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+      }
     };
 
     update();
-    const t1 = window.setTimeout(update, 80);
-    const t2 = window.setTimeout(update, 220);
+    const delays = current.needsDetail || current.selectWaiter
+      ? [60, 160, 320, 520]
+      : [60, 180, 360];
+    const timers = delays.map((ms) => window.setTimeout(update, ms));
     const onResize = () => update();
     window.addEventListener('resize', onResize);
     window.addEventListener('scroll', onResize, true);
     return () => {
       cancelled = true;
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      timers.forEach((t) => window.clearTimeout(t));
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onResize, true);
     };

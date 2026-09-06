@@ -416,6 +416,7 @@ export default function App() {
           repairDetailEnabled={repairDetailEnabled}
           onEnsureRepairDetail={ensureRepairDetail}
           onSelectWaiter={selectDemoWaiter}
+          onClearSelection={() => setSelectedId(null)}
           onFinishPlay={closeDemoPlay}
           onFinishHome={closeDemoHome}
           onSkip={closeDemoSkip}
