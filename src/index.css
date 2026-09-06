@@ -1848,6 +1848,61 @@ p {
   padding-bottom: 1rem;
 }
 
+/* Compact coach when free space above/below the spotlight is tight (iPhone) */
+.demo-coach--compact {
+  padding: 0.65rem 0.85rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+}
+.demo-coach--compact.demo-coach--top {
+  padding-top: calc(0.55rem + env(safe-area-inset-top, 0px));
+  padding-bottom: 0.65rem;
+}
+.demo-coach--compact h2 {
+  font-size: 1.02rem;
+  margin: 0.2rem 0 0.35rem;
+}
+.demo-coach--compact .demo-coach__body {
+  font-size: 0.9rem;
+  margin: 0 0 0.45rem;
+  line-height: 1.35;
+}
+.demo-coach--compact .demo-coach__dots {
+  margin-bottom: 0.45rem;
+}
+.demo-coach--compact .demo-coach__actions .btn {
+  min-height: 2.5rem;
+  min-width: 4.5rem;
+  padding: 0.35rem 0.7rem;
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .demo-coach {
+    max-height: min(46vh, 200px);
+    padding: 0.55rem 0.8rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+  }
+  .demo-coach--top {
+    padding-top: calc(0.45rem + env(safe-area-inset-top, 0px));
+    padding-bottom: 0.55rem;
+  }
+  .demo-coach h2 {
+    font-size: 1rem;
+    margin: 0.15rem 0 0.3rem;
+  }
+  .demo-coach__body {
+    font-size: 0.86rem;
+    margin: 0 0 0.4rem;
+    line-height: 1.3;
+  }
+  .demo-coach__dots {
+    margin-bottom: 0.35rem;
+  }
+}
+
+/* During demo, keep JobDetail four-question block above the coach band on phones */
+body:has(.demo-overlay:not(.demo-overlay--done)) .job-detail[data-demo="job-detail"] {
+  scroll-margin-top: 8px;
+  scroll-margin-bottom: 8px;
+}
+
 .demo-coach__head {
   display: flex;
   align-items: baseline;

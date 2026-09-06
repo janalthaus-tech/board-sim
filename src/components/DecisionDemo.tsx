@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 export type DemoTarget =
   | 'clock'
@@ -23,8 +23,6 @@ interface DemoStep {
   selectWaiter?: boolean;
   /** Needs repair detail UI visible — demo will temporarily enable if off */
   needsDetail?: boolean;
-  /** Force coach to top (true) or bottom (false); otherwise opposite spotlight */
-  coachTop?: boolean;
 }
 
 /**
@@ -38,25 +36,21 @@ const STEPS: DemoStep[] = [
     target: 'clock',
     title: 'Paused Morning Rush',
     body: 'You’re in learning mode on Morning Rush. The sim clock is paused so you can study the board — use Resume later when you’re ready to play in real time.',
-    coachTop: false,
   },
   {
     target: 'columns',
     title: 'Ride the track left → right',
-    body: 'Board columns are roller-coaster order: Dispatch through Final. Don’t skip cars ahead of earlier ones — clear the earliest step first.',
-    coachTop: false,
+    body: 'Columns run Dispatch → Final like a roller coaster. Clear the earliest step first — don’t skip cars ahead.',
   },
   {
     target: 'zones',
     title: 'Speed zone vs Sold',
     body: 'Unsold cars live in the speed zone (Dispatch / Inspection / answer). HUD zone chips and column tint match. Prioritize answers out before polishing sold / production work.',
-    coachTop: false,
   },
   {
     target: 'magnets',
     title: 'Magnet markers W / R / S / H',
-    body: 'Letter magnets flag special cars: Waiter, Rental, Shuttle, Heart. Scan magnets before you dig into concerns — they change priority.',
-    coachTop: false,
+    body: 'W / R / S / H magnets flag Waiter, Rental, Shuttle, Heart. Scan magnets before the concern — they change priority.',
   },
   {
     target: 'waiter',
@@ -67,54 +61,46 @@ const STEPS: DemoStep[] = [
   {
     target: 'next-important',
     title: 'Trust “Next most important”',
-    body: 'The coach picks the earliest pressure on the board. Read the reason, tap Select, then act — don’t invent a different fire unless the board proves otherwise.',
-    coachTop: false,
+    body: 'The coach names the earliest pressure. Read it, tap Select, then act — don’t invent another fire unless the board proves otherwise.',
   },
   {
     target: 'counts',
     title: 'Column pills & bottlenecks',
     body: 'Count pills show where cars pile up. A hot (bottleneck) pill means empty that section before feeding more work into it.',
-    coachTop: false,
   },
   {
     target: 'toast',
     title: 'Toast events — react',
     body: 'Toasts are live shop events (walk-ins, parts late, QC fails). Read them, update the board, don’t dismiss and forget.',
-    coachTop: true,
   },
   {
     target: 'goals',
     title: 'Flag hrs & GP$ sold',
-    body: 'Shop goals track flat-rate flag hours and GP$ sold. Important — but secondary to clearing the unsold speed zone and waiter timers.',
-    coachTop: false,
+    body: 'Flag hours and GP$ sold matter — but only after the unsold speed zone and waiter timers are under control.',
   },
   {
     target: 'movebar',
     title: 'How to act',
     body: 'With a card selected, use MoveBar at the bottom: advance columns, mark Answer delivered, or Clear blocker. That’s how decisions become flow.',
     selectWaiter: true,
-    coachTop: true,
   },
   {
     target: 'repair-chips',
     title: 'Inspection → approval → parts → repair',
     body: 'Card chips answer four shop questions at a glance: Is inspection done? What did the customer approve? Are parts available (and when)? Is the repair complete? (Repair detail turns on for this step; selection stays clear so the side panel doesn’t cover the chips.)',
     needsDetail: true,
-    coachTop: false,
   },
   {
     target: 'job-detail',
     title: 'Job detail panel — four questions',
-    body: 'Select a card with Detail on to open the side panel (desktop) or in-flow sheet (mobile). It expands proposed lines, approvals, parts ETAs, and completion — plus training actions to mark inspection, approve, order parts, or finish a line.',
+    body: 'Detail + a selected card opens this panel (right on desktop, above MoveBar on phone): inspection, approval, parts, repair, and training actions.',
     selectWaiter: true,
     needsDetail: true,
-    coachTop: true,
   },
   {
     target: 'speed',
     title: 'Pace with 0.5× while learning',
     body: 'Easy pace buys thinking room. Use the 0.5× / 1× / 1.5× control in the top bar while learning indicators — turn speed back up once the HUD feels automatic.',
-    coachTop: false,
   },
 ];
 
@@ -128,15 +114,15 @@ interface SpotlightRect {
 interface Props {
   open: boolean;
   repairDetailEnabled?: boolean;
-  /** Temporarily turn detail on so demo steps that need chips/sheet can spotlight them */
   onEnsureRepairDetail?: () => void;
   onSelectWaiter?: () => void;
-  /** Clear card selection so JobDetail doesn’t cover chip / column focus */
   onClearSelection?: () => void;
   onFinishPlay: () => void;
   onFinishHome: () => void;
   onSkip: () => void;
 }
+
+const COACH_GAP = 10;
 
 function isUsable(el: Element): boolean {
   const r = el.getBoundingClientRect();
@@ -147,87 +133,34 @@ function isUsable(el: Element): boolean {
   return true;
 }
 
-function pickBest(nodes: Element[]): Element | null {
-  const usable = nodes.filter(isUsable);
-  if (usable.length === 0) return nodes[0] ?? null;
-  const selected = usable.find((el) => el.closest('.card--selected'));
-  if (selected) return selected;
-  return usable.reduce((best, el) => {
-    const a = el.getBoundingClientRect();
-    const b = best.getBoundingClientRect();
-    const areaA =
-      Math.min(a.width, window.innerWidth) * Math.min(a.height, window.innerHeight);
-    const areaB =
-      Math.min(b.width, window.innerWidth) * Math.min(b.height, window.innerHeight);
-    return areaA < areaB ? el : best;
-  });
+function rectFromEl(el: Element, pad = 6): SpotlightRect | null {
+  const r = el.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return null;
+  return {
+    top: Math.max(4, r.top - pad),
+    left: Math.max(4, r.left - pad),
+    width: Math.min(window.innerWidth - 8, r.width + pad * 2),
+    height: Math.min(window.innerHeight - 8, r.height + pad * 2),
+  };
 }
 
-function queryTarget(target: DemoTarget): Element | null {
-  if (target === 'columns') {
-    const headers = Array.from(
-      document.querySelectorAll('[data-demo="column-header"]'),
-    );
-    if (headers.length > 0) return headers[0];
-    return document.querySelector('[data-demo="columns"]');
-  }
-  if (target === 'zones') {
-    return (
-      document.querySelector('[data-demo="zones"]') ??
-      document.querySelector('[data-demo="column-zone"]')
-    );
-  }
-  if (target === 'waiter') {
-    const selected =
-      document.querySelector('.card--selected [data-demo="waiter"]') ??
-      document.querySelector('.card--selected[data-demo="waiter"]');
-    if (selected) return selected;
-    return pickBest(Array.from(document.querySelectorAll('[data-demo="waiter"]')));
-  }
-  if (target === 'repair-chips') {
-    // Prefer on-screen chips with selection cleared (no JobDetail covering them)
-    const chips = Array.from(
-      document.querySelectorAll('[data-demo="repair-chips"]'),
-    );
-    const onScreen = chips.filter(isUsable);
-    if (onScreen.length > 0) {
-      const speed = onScreen.find((el) => el.closest('.column--speed'));
-      return speed ?? onScreen[0];
-    }
-    // Fallback: Detail toggle while chips mount after enabling detail
-    return (
-      document.querySelector('[data-demo="repair-detail-toggle"]') ??
-      chips[0] ??
-      null
-    );
-  }
-  if (target === 'job-detail') {
-    const panel = document.querySelector('[data-demo="job-detail"]');
-    if (panel && isUsable(panel)) return panel;
-    const status = document.querySelector('[data-demo="repair-status"]');
-    if (status) return status;
-    return panel;
-  }
-  return document.querySelector(`[data-demo="${target}"]`);
-}
-
-function unionRects(els: Element[]): SpotlightRect | null {
-  const usable = els.filter(isUsable);
-  const list = usable.length > 0 ? usable : els;
-  if (list.length === 0) return null;
+function unionRects(els: Element[], pad = 6): SpotlightRect | null {
+  if (els.length === 0) return null;
   let top = Infinity;
   let left = Infinity;
   let right = -Infinity;
   let bottom = -Infinity;
-  for (const el of list) {
+  let any = false;
+  for (const el of els) {
     const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;
+    any = true;
     top = Math.min(top, r.top);
     left = Math.min(left, r.left);
     right = Math.max(right, r.right);
     bottom = Math.max(bottom, r.bottom);
   }
-  if (!Number.isFinite(top)) return null;
-  const pad = 6;
+  if (!any) return null;
   return {
     top: Math.max(4, top - pad),
     left: Math.max(4, left - pad),
@@ -236,61 +169,220 @@ function unionRects(els: Element[]): SpotlightRect | null {
   };
 }
 
-function measure(target: DemoTarget, el: Element | null): SpotlightRect | null {
+function queryTarget(target: DemoTarget): Element | null {
   if (target === 'columns') {
     const headers = Array.from(
       document.querySelectorAll('[data-demo="column-header"]'),
     );
-    if (headers.length > 0) return unionRects(headers);
+    // Prefer headers currently in (or near) the viewport
+    const onScreen = headers.filter(isUsable);
+    return (onScreen[0] ?? headers[0] ?? document.querySelector('[data-demo="columns"]'));
+  }
+  if (target === 'zones') {
+    return (
+      document.querySelector('[data-demo="zones"]') ??
+      document.querySelector('[data-demo="column-zone"]')
+    );
+  }
+  if (target === 'waiter') {
+    // Prefer the selected card's countdown chip (may be briefly off-screen)
+    const selectedTimer =
+      document.querySelector('.card--selected [data-demo="waiter"]') ??
+      document.querySelector('.card--selected .card__timer');
+    if (selectedTimer) return selectedTimer;
+    const selectedMarkers =
+      document.querySelector('.card--selected [data-demo="waiter-markers"]') ??
+      document.querySelector('.card--selected .card__markers');
+    if (selectedMarkers) return selectedMarkers;
+    return (
+      document.querySelector('[data-demo="waiter"]') ??
+      document.querySelector('[data-demo="waiter-markers"]') ??
+      document.querySelector('[data-demo="waiter-card"]')
+    );
+  }
+  if (target === 'repair-chips') {
+    const chips = Array.from(
+      document.querySelectorAll('[data-demo="repair-chips"]'),
+    );
+    const onScreen = chips.filter(isUsable);
+    if (onScreen.length > 0) {
+      const speed = onScreen.find((el) => el.closest('.column--speed'));
+      return speed ?? onScreen[0];
+    }
+    return (
+      document.querySelector('[data-demo="repair-detail-toggle"]') ??
+      chips[0] ??
+      null
+    );
+  }
+  if (target === 'job-detail') {
+    // Spotlight the four-question block — matches the copy and is visible
+    // in both the desktop side panel and the phone in-flow sheet.
+    const status = document.querySelector('[data-demo="repair-status"]');
+    if (status) return status;
+    return document.querySelector('[data-demo="job-detail"]');
+  }
+  return document.querySelector(`[data-demo="${target}"]`);
+}
+
+function measure(target: DemoTarget, el: Element | null): SpotlightRect | null {
+  if (target === 'columns') {
+    // Only union headers that are on-screen so the ring stays tight on iPhone
+    const headers = Array.from(
+      document.querySelectorAll('[data-demo="column-header"]'),
+    );
+    const onScreen = headers.filter(isUsable);
+    const list = onScreen.length > 0 ? onScreen : headers.slice(0, 3);
+    if (list.length > 0) return unionRects(list, 6);
   }
   if (target === 'zones') {
     const hud = document.querySelector('[data-demo="zones"]');
-    const zoneLabels = Array.from(
-      document.querySelectorAll('[data-demo="column-zone"]'),
-    );
-    const parts = [hud, ...zoneLabels].filter((n): n is Element => Boolean(n));
-    if (parts.length > 0) {
-      const united = unionRects(parts);
-      // Cap tall unions (HUD + all columns) so coach still frames the idea
-      if (united && united.height > window.innerHeight * 0.42) {
-        // Prefer HUD strip alone when the board union is huge
-        if (hud && isUsable(hud)) {
-          const r = hud.getBoundingClientRect();
-          const pad = 8;
-          return {
-            top: Math.max(4, r.top - pad),
-            left: Math.max(4, r.left - pad),
-            width: Math.min(window.innerWidth - 8, r.width + pad * 2),
-            height: Math.min(window.innerHeight - 8, r.height + pad * 2),
-          };
-        }
-      }
-      return united;
+    if (hud) return rectFromEl(hud, 8);
+  }
+  if (target === 'waiter' && el) {
+    // Ring the timer chip; if tiny, include the markers row for context
+    const timer =
+      el.matches?.('[data-demo="waiter"], .card__timer')
+        ? el
+        : el.querySelector?.('[data-demo="waiter"], .card__timer');
+    const markers =
+      (timer as Element | null)?.closest?.('.card__markers') ??
+      el.closest?.('.card__markers') ??
+      el;
+    const focus = (timer as Element | null) ?? markers;
+    const r = rectFromEl(focus, 10);
+    if (r && r.width < 48 && markers && markers !== focus) {
+      return rectFromEl(markers, 8) ?? r;
     }
+    return r;
+  }
+  if (target === 'job-detail') {
+    const status = document.querySelector('[data-demo="repair-status"]');
+    const panel = document.querySelector('[data-demo="job-detail"]');
+    const focus = status ?? panel ?? el;
+    if (!focus) return null;
+    const r = rectFromEl(focus, 8);
+    if (!r) return null;
+    // Keep ring within the visible panel, not under MoveBar / coach
+    const maxH = window.innerHeight * 0.4;
+    if (r.height > maxH) r.height = maxH;
+    return r;
   }
   if (!el) return null;
-  const r = el.getBoundingClientRect();
-  if (r.width < 2 || r.height < 2) return null;
   const pad =
-    target === 'waiter' ||
     target === 'repair-chips' ||
     target === 'speed' ||
-    target === 'clock'
+    target === 'clock' ||
+    target === 'magnets' ||
+    target === 'counts' ||
+    target === 'next-important' ||
+    target === 'goals'
       ? 8
       : 6;
-  let height = r.height + pad * 2;
-  let width = r.width + pad * 2;
-  let top = r.top - pad;
-  let left = r.left - pad;
-  if (target === 'job-detail' && height > window.innerHeight * 0.55) {
-    height = window.innerHeight * 0.55;
+  return rectFromEl(el, pad);
+}
+
+/** Place coach in the larger free band that does not cover the spotlight. */
+function placeCoach(spot: SpotlightRect | null): {
+  top: boolean;
+  maxHeight: number;
+} {
+  const vh = window.innerHeight;
+  const landscape = window.matchMedia(
+    '(orientation: landscape) and (max-height: 520px)',
+  ).matches;
+  const phone = window.matchMedia('(max-width: 900px)').matches;
+  const minCoach = landscape ? 120 : phone ? 160 : 180;
+  const idealCoach = landscape
+    ? Math.min(vh * 0.48, 200)
+    : Math.min(vh * 0.4, 300);
+
+  if (!spot) {
+    return { top: false, maxHeight: idealCoach };
+  }
+
+  const spotTop = spot.top;
+  const spotBottom = spot.top + spot.height;
+  const spaceAbove = Math.max(0, spotTop - COACH_GAP);
+  const spaceBelow = Math.max(0, vh - spotBottom - COACH_GAP);
+
+  // Prefer a side that fully fits a usable coach without covering the ring
+  const aboveOk = spaceAbove >= minCoach;
+  const belowOk = spaceBelow >= minCoach;
+
+  if (aboveOk && belowOk) {
+    // Prefer the roomier side
+    if (spaceAbove >= spaceBelow) {
+      return { top: true, maxHeight: Math.min(idealCoach, spaceAbove) };
+    }
+    return { top: false, maxHeight: Math.min(idealCoach, spaceBelow) };
+  }
+  if (aboveOk) {
+    return { top: true, maxHeight: Math.min(idealCoach, spaceAbove) };
+  }
+  if (belowOk) {
+    return { top: false, maxHeight: Math.min(idealCoach, spaceBelow) };
+  }
+
+  // Neither side fits well (tall spotlight) — pick the larger gap and shrink
+  if (spaceAbove >= spaceBelow) {
+    return {
+      top: true,
+      maxHeight: Math.max(100, Math.min(idealCoach, spaceAbove || vh * 0.28)),
+    };
   }
   return {
-    top: Math.max(4, top),
-    left: Math.max(4, left),
-    width: Math.min(window.innerWidth - 8, width),
-    height: Math.min(window.innerHeight - 8, height),
+    top: false,
+    maxHeight: Math.max(100, Math.min(idealCoach, spaceBelow || vh * 0.28)),
   };
+}
+
+function scrollTargetIntoSafeZone(
+  el: Element | null,
+  coachTop: boolean,
+  coachMaxH: number,
+) {
+  if (!el || !('scrollIntoView' in el)) return;
+  try {
+    (el as HTMLElement).scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+      behavior: 'smooth',
+    });
+  } catch {
+    /* ignore */
+  }
+
+  // After layout, nudge so the target sits in the free band opposite the coach
+  const vh = window.innerHeight;
+  const r = el.getBoundingClientRect();
+  const safeTop = coachTop ? coachMaxH + COACH_GAP + 4 : 4;
+  const safeBottom = coachTop ? vh - 4 : vh - coachMaxH - COACH_GAP - 4;
+  if (r.top >= safeTop && r.bottom <= safeBottom) return;
+
+  // Prefer aligning into the safe band via window / nearest scroll parent
+  const delta =
+    r.top < safeTop
+      ? r.top - safeTop
+      : r.bottom > safeBottom
+        ? r.bottom - safeBottom
+        : 0;
+  if (Math.abs(delta) < 2) return;
+
+  let node: Element | null = el.parentElement;
+  while (node && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    const canScroll =
+      /(auto|scroll)/.test(style.overflowY) ||
+      /(auto|scroll)/.test(style.overflow) ||
+      node.scrollHeight > node.clientHeight + 4;
+    if (canScroll) {
+      (node as HTMLElement).scrollBy({ top: delta, behavior: 'smooth' });
+      return;
+    }
+    node = node.parentElement;
+  }
+  window.scrollBy({ top: delta, behavior: 'smooth' });
 }
 
 export function DecisionDemo({
@@ -306,37 +398,19 @@ export function DecisionDemo({
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
   const [spot, setSpot] = useState<SpotlightRect | null>(null);
+  const [placementTick, setPlacementTick] = useState(0);
+  const coachRef = useRef<HTMLDivElement | null>(null);
 
   const current = STEPS[step];
   const last = step >= STEPS.length - 1;
 
-  // Keep coach opposite the spotlight so it never covers the described UI
-  const coachTop = (() => {
-    if (!current) return false;
-    if (typeof current.coachTop === 'boolean') return current.coachTop;
-    if (
-      current.target === 'movebar' ||
-      current.target === 'job-detail' ||
-      current.target === 'toast'
-    ) {
-      return true;
-    }
-    if (
-      current.target === 'speed' ||
-      current.target === 'clock' ||
-      current.target === 'columns' ||
-      current.target === 'zones' ||
-      current.target === 'magnets' ||
-      current.target === 'next-important' ||
-      current.target === 'counts' ||
-      current.target === 'goals'
-    ) {
-      return false;
-    }
-    if (!spot) return false;
-    const mid = spot.top + spot.height / 2;
-    return mid > window.innerHeight * 0.48;
-  })();
+  const placement = useMemo(() => {
+    void placementTick;
+    return placeCoach(spot);
+  }, [spot, placementTick]);
+
+  const coachTop = placement.top;
+  const coachMaxHeight = placement.maxHeight;
 
   useEffect(() => {
     if (!open) {
@@ -351,7 +425,6 @@ export function DecisionDemo({
     if (current.selectWaiter) {
       onSelectWaiter?.();
     } else {
-      // Keep JobDetail closed so card chips / columns / HUD stay visible
       onClearSelection?.();
     }
   }, [open, done, step, current?.selectWaiter, onSelectWaiter, onClearSelection]);
@@ -378,76 +451,47 @@ export function DecisionDemo({
     const update = () => {
       if (cancelled) return;
       const el = queryTarget(current.target);
-      setSpot(measure(current.target, el));
+      const next = measure(current.target, el);
+      setSpot(next);
+      setPlacementTick((n) => n + 1);
+
+      const place = placeCoach(next);
       const scrollEl =
         current.target === 'waiter'
           ? (document.querySelector('.card--selected') ??
             document.querySelector('[data-demo="waiter-card"]') ??
             el)
           : current.target === 'job-detail'
-            ? (document.querySelector('[data-demo="job-detail"]') ?? el)
+            ? (document.querySelector('[data-demo="repair-status"]') ??
+              document.querySelector('[data-demo="job-detail"]') ??
+              el)
             : current.target === 'repair-chips'
               ? (el?.closest('.card') ?? el)
-              : el;
-      if (scrollEl && 'scrollIntoView' in scrollEl) {
-        try {
-          (scrollEl as HTMLElement).scrollIntoView({
-            block: current.target === 'job-detail' ? 'nearest' : 'center',
-            inline: 'nearest',
-            behavior: 'smooth',
-          });
-        } catch {
-          /* ignore */
-        }
-      }
-      if (current.target === 'columns') {
-        const first = document.querySelector('[data-demo="column-header"]');
-        if (first && 'scrollIntoView' in first) {
-          try {
-            (first as HTMLElement).scrollIntoView({
-              block: 'nearest',
-              inline: 'nearest',
-              behavior: 'smooth',
-            });
-          } catch {
-            /* ignore */
-          }
-        }
-      }
-      if (current.target === 'clock' || current.target === 'speed') {
-        const top = document.querySelector(
-          current.target === 'clock'
-            ? '[data-demo="clock"]'
-            : '[data-demo="speed"]',
-        );
-        if (top && 'scrollIntoView' in top) {
-          try {
-            (top as HTMLElement).scrollIntoView({
-              block: 'nearest',
-              inline: 'nearest',
-              behavior: 'smooth',
-            });
-          } catch {
-            /* ignore */
-          }
-        }
-      }
+              : current.target === 'columns'
+                ? (document.querySelector('[data-demo="column-header"]') ?? el)
+                : el;
+
+      scrollTargetIntoSafeZone(scrollEl, place.top, place.maxHeight);
     };
 
     update();
     const delays =
       current.needsDetail || current.selectWaiter
-        ? [60, 160, 320, 520, 800]
-        : [60, 180, 360];
+        ? [50, 140, 280, 480, 750, 1100]
+        : [50, 160, 320, 560];
     const timers = delays.map((ms) => window.setTimeout(update, ms));
     const onResize = () => update();
     window.addEventListener('resize', onResize);
     window.addEventListener('scroll', onResize, true);
+    const mq = window.matchMedia('(orientation: landscape)');
+    const onOrient = () => update();
+    mq.addEventListener?.('change', onOrient);
     return () => {
       cancelled = true;
       timers.forEach((t) => window.clearTimeout(t));
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onResize, true);
+      mq.removeEventListener?.('change', onOrient);
     };
   }, [open, done, step, current?.target, repairDetailEnabled]);
 
@@ -496,7 +540,13 @@ export function DecisionDemo({
         />
       )}
 
-      <div className={`demo-coach ${coachTop ? 'demo-coach--top' : ''}`}>
+      <div
+        ref={coachRef}
+        className={`demo-coach ${coachTop ? 'demo-coach--top' : ''} ${
+          coachMaxHeight < 200 ? 'demo-coach--compact' : ''
+        }`}
+        style={{ maxHeight: coachMaxHeight }}
+      >
         <div className="demo-coach__head">
           <p className="eyebrow">Decision demo</p>
           <p className="demo-coach__count">

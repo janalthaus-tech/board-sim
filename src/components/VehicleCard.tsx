@@ -75,7 +75,11 @@ export function VehicleCard({
       aria-label={`${job.customerName}, ${vehicleLabel(job)}`}
     >
       {(markers.length > 0 || job.keysOnBoard || job.promisedToday) && (
-        <div className="card__markers" aria-label="Job magnets">
+        <div
+          className="card__markers"
+          aria-label="Job magnets"
+          data-demo={isWaiter && job.waiterTimerMin != null ? 'waiter-markers' : undefined}
+        >
           {markers.map((m: JobMarker) => (
             <span
               key={m}
