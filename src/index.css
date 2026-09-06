@@ -424,13 +424,21 @@ p {
   font-size: 0.85rem;
 }
 
+.board-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .board {
   display: flex;
   gap: 0.75rem;
   padding: 0.75rem 1rem 0.5rem;
   overflow-x: auto;
   overflow-y: hidden;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
 }
@@ -1589,12 +1597,43 @@ p {
   }
 
   .board {
-    padding: 0.45rem 0.55rem 0.35rem;
-    gap: 0.55rem;
+    padding: 0.35rem 0.45rem 0.3rem;
+    gap: 0.5rem;
   }
 
   .column {
-    flex: 0 0 min(200px, 72vw);
+    flex: 0 0 min(190px, 70vw);
+    max-height: 100%;
+  }
+
+  .column__header {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .column__header h2 {
+    font-size: 0.86rem;
+  }
+
+  .column__body {
+    padding: 0.4rem;
+    gap: 0.4rem;
+  }
+
+  .card {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .card__customer {
+    font-size: 0.9rem;
+  }
+
+  .card__vehicle,
+  .card__concern {
+    font-size: 0.78rem;
+  }
+
+  .board-hud--compact {
+    padding: 0.28rem 0.55rem;
   }
 
   .toast {
@@ -1702,13 +1741,15 @@ p {
     display: none;
   }
 
-  .board {
+  .board,
+  .board-main {
     min-height: 0;
     flex: 1 1 auto;
   }
 
   .column {
     flex: 0 0 min(180px, 42vw);
+    max-height: 100%;
   }
 }
 
@@ -1981,18 +2022,20 @@ body:has(.demo-overlay:not(.demo-overlay--done)) .demo-coach {
   border: 1px solid #15803d;
 }
 
-/* Job detail drawer / sheet */
+/* Job detail — in-flow split panel (never fixed/absolute over .board) */
 .job-detail {
+  position: relative;
   border-top: 1px solid var(--border);
   background: #0c121c;
-  padding: 0.75rem 1rem;
-  padding-bottom: 0.5rem;
-  max-height: min(42vh, 360px);
+  padding: 0.65rem 0.85rem;
+  max-height: min(38vh, 320px);
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  flex-shrink: 0;
-  z-index: 45;
-  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.3);
+  flex: 0 0 auto;
+  min-height: 0;
+  z-index: auto;
+  box-shadow: none;
 }
 
 .job-detail__head {
@@ -2095,17 +2138,75 @@ body:has(.demo-overlay:not(.demo-overlay--done)) .demo-coach {
   font-size: 0.86rem;
 }
 
-@media (max-width: 900px) {
-  .job-detail {
-    max-height: min(38vh, 320px);
-    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
-    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+/* Desktop / wide: side panel on the right — board flexes left, detail never covers columns */
+@media (min-width: 900px) {
+  .board-main--with-detail {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .board-main--with-detail .board {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .board-main--with-detail .job-detail {
+    flex: 0 0 clamp(320px, 28vw, 360px);
+    width: clamp(320px, 28vw, 360px);
+    max-width: 360px;
+    max-height: none;
+    height: auto;
+    align-self: stretch;
+    border-top: none;
+    border-left: 1px solid var(--border);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.22);
+    padding: 0.75rem 0.85rem;
+  }
+}
+
+/* Phone / narrow: bottom sheet ABOVE MoveBar in the flex column (not fixed overlay) */
+@media (max-width: 899px) {
+  .board-main--with-detail .board {
+    flex: 1 1 auto;
+    /* Keep ~2 card heights visible when detail is open */
+    min-height: 10.5rem;
+  }
+
+  .board-main--with-detail .job-detail {
+    max-height: min(38vh, 300px);
+    flex: 0 1 auto;
+    border-top: 1px solid var(--border);
+    padding-left: max(0.65rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.65rem, env(safe-area-inset-right, 0px));
+    /* No safe-area bottom here — MoveBar owns that so detail text isn't clipped */
+    padding-bottom: 0.55rem;
+  }
+
+  .board-screen--detail-open .card {
+    padding: 0.5rem 0.55rem;
+  }
+
+  .board-screen--detail-open .column__body {
+    gap: 0.4rem;
+    padding: 0.4rem;
+  }
+
+  .board-screen--detail-open .card__concern {
+    font-size: 0.78rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
   }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
-  .job-detail {
-    max-height: min(34vh, 220px);
+  .board-main--with-detail .job-detail {
+    max-height: min(32vh, 200px);
+  }
+
+  .board-main--with-detail .board {
+    min-height: 7.5rem;
   }
 }
 

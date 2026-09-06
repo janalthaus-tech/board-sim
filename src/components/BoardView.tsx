@@ -190,8 +190,12 @@ export function BoardView({
     return () => window.clearTimeout(t);
   }, [toast, onDismissToast, demoMode]);
 
+  const detailOpen = Boolean(selected && repairDetailEnabled);
+
   return (
-    <div className={`board-screen board-screen--role-${role}`}>
+    <div
+      className={`board-screen board-screen--role-${role}${detailOpen ? ' board-screen--detail-open' : ''}`}
+    >
       <header className="topbar">
         <div className="topbar__left">
           <button type="button" className="btn btn--ghost btn--sm" onClick={onHome}>
@@ -551,39 +555,43 @@ export function BoardView({
         </div>
       )}
 
-      <div className="board" role="list" data-demo="columns">
-        {BOARD_COLUMNS.map((col) => (
-          <Column
-            key={col}
-            columnId={col}
-            jobs={jobsInColumn(board, col)}
-            selectedId={selectedId}
-            highlightJobId={nextHint.jobId}
-            bottleneck={bottleneck === col}
-            simMin={simMin}
-            repairDetailEnabled={repairDetailEnabled}
-            role={role}
-            onSelect={(id) => onSelect(id)}
-            onDragStart={(id) => onSelect(id)}
-            onDropJob={(columnId, jobId) => onMove(jobId, columnId)}
-          />
-        ))}
-      </div>
+      <div
+        className={`board-main${detailOpen ? ' board-main--with-detail' : ''}`}
+      >
+        <div className="board" role="list" data-demo="columns">
+          {BOARD_COLUMNS.map((col) => (
+            <Column
+              key={col}
+              columnId={col}
+              jobs={jobsInColumn(board, col)}
+              selectedId={selectedId}
+              highlightJobId={nextHint.jobId}
+              bottleneck={bottleneck === col}
+              simMin={simMin}
+              repairDetailEnabled={repairDetailEnabled}
+              role={role}
+              onSelect={(id) => onSelect(id)}
+              onDragStart={(id) => onSelect(id)}
+              onDropJob={(columnId, jobId) => onMove(jobId, columnId)}
+            />
+          ))}
+        </div>
 
-      {selected && repairDetailEnabled && (
-        <JobDetail
-          job={selected}
-          simMin={simMin}
-          role={role}
-          onClose={() => onSelect(null)}
-          onMarkInspectionComplete={() => onMarkInspectionComplete(selected.id)}
-          onApproveAllPending={() => onApproveAllPending(selected.id)}
-          onApproveLine={(lineId) => onApproveLine(selected.id, lineId)}
-          onMarkPartsOrdered={(lineId) => onMarkPartsOrdered(selected.id, lineId)}
-          onMarkLineDone={(lineId) => onMarkLineDone(selected.id, lineId)}
-          onMarkLineInRepair={(lineId) => onMarkLineInRepair(selected.id, lineId)}
-        />
-      )}
+        {selected && repairDetailEnabled && (
+          <JobDetail
+            job={selected}
+            simMin={simMin}
+            role={role}
+            onClose={() => onSelect(null)}
+            onMarkInspectionComplete={() => onMarkInspectionComplete(selected.id)}
+            onApproveAllPending={() => onApproveAllPending(selected.id)}
+            onApproveLine={(lineId) => onApproveLine(selected.id, lineId)}
+            onMarkPartsOrdered={(lineId) => onMarkPartsOrdered(selected.id, lineId)}
+            onMarkLineDone={(lineId) => onMarkLineDone(selected.id, lineId)}
+            onMarkLineInRepair={(lineId) => onMarkLineInRepair(selected.id, lineId)}
+          />
+        )}
+      </div>
 
       <MoveBar
         job={selected}
