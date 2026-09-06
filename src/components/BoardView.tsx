@@ -217,7 +217,7 @@ export function BoardView({
             </span>
           )}
         </div>
-        <div className="topbar__clock" aria-live="polite">
+        <div className="topbar__clock" aria-live="polite" data-demo="clock">
           <span className="clock__time">{formatSimClock(simMin)}</span>
           <span className="clock__meta">
             T+{Math.floor(simMin)}m / {scenario.durationMin}m · {fired.length} events
@@ -349,6 +349,7 @@ export function BoardView({
                     className={`toggle toggle--sm ${repairDetailEnabled ? 'toggle--on' : ''}`}
                     onClick={() => onToggleRepairDetail(!repairDetailEnabled)}
                     title="Toggle repair & approval detail mid-run"
+                    data-demo="repair-detail-toggle"
                   >
                     <span className="toggle__knob" aria-hidden />
                     <span className="toggle__label">

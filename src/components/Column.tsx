@@ -62,7 +62,7 @@ export function Column({
             {COLUMN_LABELS[columnId]}
             {bottleneck && <span className="column__bottleneck-tag">Bottleneck</span>}
           </h2>
-          <span className="column__zone">{zone}</span>
+          <span className="column__zone" data-demo="column-zone">{zone}</span>
         </div>
         <span className={`column__count ${bottleneck ? 'column__count--hot' : ''}`}>
           {jobs.length}

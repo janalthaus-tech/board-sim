@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 
 export type DemoTarget =
+  | 'clock'
   | 'columns'
   | 'zones'
   | 'magnets'
@@ -10,85 +11,110 @@ export type DemoTarget =
   | 'toast'
   | 'goals'
   | 'movebar'
-  | 'speed'
   | 'repair-chips'
-  | 'job-detail';
+  | 'job-detail'
+  | 'speed';
 
 interface DemoStep {
   target: DemoTarget;
   title: string;
   body: string;
-  /** Prefer selecting a waiter card so MoveBar / timer are visible */
+  /** Prefer selecting a waiter card so MoveBar / timer / detail are visible */
   selectWaiter?: boolean;
   /** Needs repair detail UI visible — demo will temporarily enable if off */
   needsDetail?: boolean;
+  /** Force coach to top (true) or bottom (false); otherwise opposite spotlight */
+  coachTop?: boolean;
 }
 
+/**
+ * Decision walkthrough for the current Board layout:
+ * desktop split board | JobDetail; mobile HUD → board → detail → sticky MoveBar.
+ * Selection is cleared unless selectWaiter so the side panel stays closed
+ * when spotlighting chips / columns / HUD.
+ */
 const STEPS: DemoStep[] = [
+  {
+    target: 'clock',
+    title: 'Paused Morning Rush',
+    body: 'You’re in learning mode on Morning Rush. The sim clock is paused so you can study the board — use Resume later when you’re ready to play in real time.',
+    coachTop: false,
+  },
   {
     target: 'columns',
     title: 'Ride the track left → right',
     body: 'Board columns are roller-coaster order: Dispatch through Final. Don’t skip cars ahead of earlier ones — clear the earliest step first.',
+    coachTop: false,
   },
   {
     target: 'zones',
     title: 'Speed zone vs Sold',
-    body: 'Unsold cars live in the speed zone (Dispatch / Inspection / answer). Prioritize getting answers out before polishing sold / production work.',
+    body: 'Unsold cars live in the speed zone (Dispatch / Inspection / answer). HUD zone chips and column tint match. Prioritize answers out before polishing sold / production work.',
+    coachTop: false,
   },
   {
     target: 'magnets',
     title: 'Magnet markers W / R / S / H',
     body: 'Letter magnets flag special cars: Waiter, Rental, Shuttle, Heart. Scan magnets before you dig into concerns — they change priority.',
+    coachTop: false,
   },
   {
     target: 'waiter',
     title: 'Waiter timer = 1-hour answer',
-    body: 'W cars show a countdown. Earliest timer first — deliver an answer within about an hour of drop-off before chasing sold WIP.',
+    body: 'W cars show a countdown chip. Earliest timer first — deliver an answer within about an hour of drop-off before chasing sold WIP.',
     selectWaiter: true,
   },
   {
     target: 'next-important',
     title: 'Trust “Next most important”',
     body: 'The coach picks the earliest pressure on the board. Read the reason, tap Select, then act — don’t invent a different fire unless the board proves otherwise.',
+    coachTop: false,
   },
   {
     target: 'counts',
     title: 'Column pills & bottlenecks',
     body: 'Count pills show where cars pile up. A hot (bottleneck) pill means empty that section before feeding more work into it.',
+    coachTop: false,
   },
   {
     target: 'toast',
     title: 'Toast events — react',
     body: 'Toasts are live shop events (walk-ins, parts late, QC fails). Read them, update the board, don’t dismiss and forget.',
+    coachTop: true,
   },
   {
     target: 'goals',
     title: 'Flag hrs & GP$ sold',
     body: 'Shop goals track flat-rate flag hours and GP$ sold. Important — but secondary to clearing the unsold speed zone and waiter timers.',
-  },
-  {
-    target: 'repair-chips',
-    title: 'Inspection → approval → parts → repair',
-    body: 'Card chips answer the four shop questions: Is inspection done? What did the customer approve? Are parts available (and when)? Is the repair complete? (Repair detail is turned on for this step if it was off.)',
-    needsDetail: true,
-  },
-  {
-    target: 'job-detail',
-    title: 'Open a card for line-level detail',
-    body: 'The detail sheet shows proposed lines, approvals, parts ETAs, and completion times. Training actions let you mark inspection complete, approve, order parts, or finish a line.',
-    selectWaiter: true,
-    needsDetail: true,
+    coachTop: false,
   },
   {
     target: 'movebar',
     title: 'How to act',
-    body: 'Tap a card, then use MoveBar: advance columns, mark Answer delivered, or Clear blocker. That’s how decisions become flow.',
+    body: 'With a card selected, use MoveBar at the bottom: advance columns, mark Answer delivered, or Clear blocker. That’s how decisions become flow.',
     selectWaiter: true,
+    coachTop: true,
+  },
+  {
+    target: 'repair-chips',
+    title: 'Inspection → approval → parts → repair',
+    body: 'Card chips answer four shop questions at a glance: Is inspection done? What did the customer approve? Are parts available (and when)? Is the repair complete? (Repair detail turns on for this step; selection stays clear so the side panel doesn’t cover the chips.)',
+    needsDetail: true,
+    coachTop: false,
+  },
+  {
+    target: 'job-detail',
+    title: 'Job detail panel — four questions',
+    body: 'Select a card with Detail on to open the side panel (desktop) or in-flow sheet (mobile). It expands proposed lines, approvals, parts ETAs, and completion — plus training actions to mark inspection, approve, order parts, or finish a line.',
+    selectWaiter: true,
+    needsDetail: true,
+    coachTop: true,
   },
   {
     target: 'speed',
-    title: 'Pace + 0.5× while learning',
-    body: 'Easy pace buys real-time thinking room. Use the 0.5× / 1× / 1.5× control in the top bar while learning indicators — turn speed back up once the HUD feels automatic.',
+    title: 'Pace with 0.5× while learning',
+    body: 'Easy pace buys thinking room. Use the 0.5× / 1× / 1.5× control in the top bar while learning indicators — turn speed back up once the HUD feels automatic.',
+    coachTop: false,
   },
 ];
 
@@ -117,7 +143,6 @@ function isUsable(el: Element): boolean {
   if (r.width < 2 || r.height < 2) return false;
   const vh = window.innerHeight;
   const vw = window.innerWidth;
-  // Must intersect the viewport at least a little
   if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) return false;
   return true;
 }
@@ -125,24 +150,32 @@ function isUsable(el: Element): boolean {
 function pickBest(nodes: Element[]): Element | null {
   const usable = nodes.filter(isUsable);
   if (usable.length === 0) return nodes[0] ?? null;
-  // Prefer selected card descendants, then largest visible area
   const selected = usable.find((el) => el.closest('.card--selected'));
   if (selected) return selected;
   return usable.reduce((best, el) => {
     const a = el.getBoundingClientRect();
     const b = best.getBoundingClientRect();
-    const areaA = Math.min(a.width, window.innerWidth) * Math.min(a.height, window.innerHeight);
-    const areaB = Math.min(b.width, window.innerWidth) * Math.min(b.height, window.innerHeight);
-    // For chips/timers prefer smaller focused targets over huge boards
+    const areaA =
+      Math.min(a.width, window.innerWidth) * Math.min(a.height, window.innerHeight);
+    const areaB =
+      Math.min(b.width, window.innerWidth) * Math.min(b.height, window.innerHeight);
     return areaA < areaB ? el : best;
   });
 }
 
 function queryTarget(target: DemoTarget): Element | null {
   if (target === 'columns') {
-    const headers = Array.from(document.querySelectorAll('[data-demo="column-header"]'));
-    if (headers.length > 0) return headers[0]; // measure() unions all headers
+    const headers = Array.from(
+      document.querySelectorAll('[data-demo="column-header"]'),
+    );
+    if (headers.length > 0) return headers[0];
     return document.querySelector('[data-demo="columns"]');
+  }
+  if (target === 'zones') {
+    return (
+      document.querySelector('[data-demo="zones"]') ??
+      document.querySelector('[data-demo="column-zone"]')
+    );
   }
   if (target === 'waiter') {
     const selected =
@@ -152,17 +185,28 @@ function queryTarget(target: DemoTarget): Element | null {
     return pickBest(Array.from(document.querySelectorAll('[data-demo="waiter"]')));
   }
   if (target === 'repair-chips') {
-    const selected = document.querySelector('.card--selected [data-demo="repair-chips"]');
-    if (selected && isUsable(selected)) return selected;
-    // Prefer chips that are on-screen; avoid huge first-in-DOM offscreen cards
-    const chips = Array.from(document.querySelectorAll('[data-demo="repair-chips"]'));
+    // Prefer on-screen chips with selection cleared (no JobDetail covering them)
+    const chips = Array.from(
+      document.querySelectorAll('[data-demo="repair-chips"]'),
+    );
     const onScreen = chips.filter(isUsable);
     if (onScreen.length > 0) {
-      // Prefer a card in the speed zone (left columns) when possible
       const speed = onScreen.find((el) => el.closest('.column--speed'));
       return speed ?? onScreen[0];
     }
-    return chips[0] ?? null;
+    // Fallback: Detail toggle while chips mount after enabling detail
+    return (
+      document.querySelector('[data-demo="repair-detail-toggle"]') ??
+      chips[0] ??
+      null
+    );
+  }
+  if (target === 'job-detail') {
+    const panel = document.querySelector('[data-demo="job-detail"]');
+    if (panel && isUsable(panel)) return panel;
+    const status = document.querySelector('[data-demo="repair-status"]');
+    if (status) return status;
+    return panel;
   }
   return document.querySelector(`[data-demo="${target}"]`);
 }
@@ -194,14 +238,46 @@ function unionRects(els: Element[]): SpotlightRect | null {
 
 function measure(target: DemoTarget, el: Element | null): SpotlightRect | null {
   if (target === 'columns') {
-    const headers = Array.from(document.querySelectorAll('[data-demo="column-header"]'));
+    const headers = Array.from(
+      document.querySelectorAll('[data-demo="column-header"]'),
+    );
     if (headers.length > 0) return unionRects(headers);
+  }
+  if (target === 'zones') {
+    const hud = document.querySelector('[data-demo="zones"]');
+    const zoneLabels = Array.from(
+      document.querySelectorAll('[data-demo="column-zone"]'),
+    );
+    const parts = [hud, ...zoneLabels].filter((n): n is Element => Boolean(n));
+    if (parts.length > 0) {
+      const united = unionRects(parts);
+      // Cap tall unions (HUD + all columns) so coach still frames the idea
+      if (united && united.height > window.innerHeight * 0.42) {
+        // Prefer HUD strip alone when the board union is huge
+        if (hud && isUsable(hud)) {
+          const r = hud.getBoundingClientRect();
+          const pad = 8;
+          return {
+            top: Math.max(4, r.top - pad),
+            left: Math.max(4, r.left - pad),
+            width: Math.min(window.innerWidth - 8, r.width + pad * 2),
+            height: Math.min(window.innerHeight - 8, r.height + pad * 2),
+          };
+        }
+      }
+      return united;
+    }
   }
   if (!el) return null;
   const r = el.getBoundingClientRect();
   if (r.width < 2 || r.height < 2) return null;
-  const pad = target === 'waiter' || target === 'repair-chips' || target === 'speed' ? 8 : 6;
-  // Cap absurdly tall spotlights so coach still frames the idea
+  const pad =
+    target === 'waiter' ||
+    target === 'repair-chips' ||
+    target === 'speed' ||
+    target === 'clock'
+      ? 8
+      : 6;
   let height = r.height + pad * 2;
   let width = r.width + pad * 2;
   let top = r.top - pad;
@@ -237,7 +313,7 @@ export function DecisionDemo({
   // Keep coach opposite the spotlight so it never covers the described UI
   const coachTop = (() => {
     if (!current) return false;
-    // Always top for bottom-of-screen UI
+    if (typeof current.coachTop === 'boolean') return current.coachTop;
     if (
       current.target === 'movebar' ||
       current.target === 'job-detail' ||
@@ -245,9 +321,9 @@ export function DecisionDemo({
     ) {
       return true;
     }
-    // Always bottom for top-bar / column-header / HUD strip targets
     if (
       current.target === 'speed' ||
+      current.target === 'clock' ||
       current.target === 'columns' ||
       current.target === 'zones' ||
       current.target === 'magnets' ||
@@ -275,12 +351,11 @@ export function DecisionDemo({
     if (current.selectWaiter) {
       onSelectWaiter?.();
     } else {
-      // Keep JobDetail closed so card chips / columns stay visible
+      // Keep JobDetail closed so card chips / columns / HUD stay visible
       onClearSelection?.();
     }
   }, [open, done, step, current?.selectWaiter, onSelectWaiter, onClearSelection]);
 
-  // Temporarily enable repair detail for chip / sheet steps
   useEffect(() => {
     if (!open || done || !current?.needsDetail) return;
     if (!repairDetailEnabled) onEnsureRepairDetail?.();
@@ -309,11 +384,15 @@ export function DecisionDemo({
           ? (document.querySelector('.card--selected') ??
             document.querySelector('[data-demo="waiter-card"]') ??
             el)
-          : el;
+          : current.target === 'job-detail'
+            ? (document.querySelector('[data-demo="job-detail"]') ?? el)
+            : current.target === 'repair-chips'
+              ? (el?.closest('.card') ?? el)
+              : el;
       if (scrollEl && 'scrollIntoView' in scrollEl) {
         try {
           (scrollEl as HTMLElement).scrollIntoView({
-            block: 'center',
+            block: current.target === 'job-detail' ? 'nearest' : 'center',
             inline: 'nearest',
             behavior: 'smooth',
           });
@@ -321,7 +400,6 @@ export function DecisionDemo({
           /* ignore */
         }
       }
-      // Also scroll column headers into view for the track step
       if (current.target === 'columns') {
         const first = document.querySelector('[data-demo="column-header"]');
         if (first && 'scrollIntoView' in first) {
@@ -336,12 +414,31 @@ export function DecisionDemo({
           }
         }
       }
+      if (current.target === 'clock' || current.target === 'speed') {
+        const top = document.querySelector(
+          current.target === 'clock'
+            ? '[data-demo="clock"]'
+            : '[data-demo="speed"]',
+        );
+        if (top && 'scrollIntoView' in top) {
+          try {
+            (top as HTMLElement).scrollIntoView({
+              block: 'nearest',
+              inline: 'nearest',
+              behavior: 'smooth',
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+      }
     };
 
     update();
-    const delays = current.needsDetail || current.selectWaiter
-      ? [60, 160, 320, 520]
-      : [60, 180, 360];
+    const delays =
+      current.needsDetail || current.selectWaiter
+        ? [60, 160, 320, 520, 800]
+        : [60, 180, 360];
     const timers = delays.map((ms) => window.setTimeout(update, ms));
     const onResize = () => update();
     window.addEventListener('resize', onResize);
