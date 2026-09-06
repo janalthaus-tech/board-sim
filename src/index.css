@@ -1741,6 +1741,17 @@ p {
     display: none;
   }
 
+  /* Decision demo must still show the focused strips in landscape */
+  .board-screen--demo .board-hud--demo-focus,
+  .board-screen--demo .board-hud--demo-focus.board-hud--goals,
+  .board-screen--demo .board-hud--demo-focus.board-hud--coach,
+  .board-screen--demo .board-hud--demo-focus .board-hud__legend,
+  .board-screen--demo-magnets .board-hud__legend,
+  .board-screen--demo-goals .board-hud--goals,
+  .board-screen--demo-next-important .board-hud--coach {
+    display: flex !important;
+  }
+
   .board,
   .board-main {
     min-height: 0;
@@ -2609,4 +2620,71 @@ body:has(.demo-overlay:not(.demo-overlay--done)) .job-detail {
 .board-screen--demo-waiter [data-demo="waiter"],
 .board-screen--demo-waiter .card__timer {
   scroll-margin: 16px;
+}
+
+/* Landscape demo: keep focused HUD strips visible under a slim topbar */
+@media (orientation: landscape) and (max-height: 520px) {
+  .board-screen--demo .topbar__titles .eyebrow,
+  .board-screen--demo .role-badge,
+  .board-screen--demo .topbar__actions .btn--help,
+  .board-screen--demo .topbar__clock .clock__meta,
+  .board-screen--demo .topbar__clock .clock__bar {
+    display: none;
+  }
+
+  .board-screen--demo .board-hud--demo-focus {
+    position: relative;
+    z-index: 70;
+    flex-shrink: 0;
+    max-height: min(34vh, 140px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #0f1522;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Compact goals so the strip fits above the coach */
+  .board-screen--demo-goals .goals-strip__label,
+  .board-screen--demo-goals .flag-pill__pay,
+  .board-screen--demo-goals .flag-pill__eff,
+  .board-screen--demo-goals .goals-strip__gsph {
+    display: none !important;
+  }
+
+  .board-screen--demo-goals .board-hud--demo-focus {
+    max-height: min(38vh, 160px);
+    gap: 0.25rem;
+    padding: 0.3rem 0.55rem;
+  }
+
+  .board-screen--demo-goals .goals-strip__techs,
+  .board-screen--demo-goals .goals-strip__gp-meta {
+    gap: 0.25rem;
+  }
+
+  .board-screen--demo-magnets .magnet-legend__text {
+    font-size: 0.78rem;
+  }
+
+  .board-screen--demo-next-important .board-hud__next-label {
+    font-size: 0.72rem;
+  }
+
+  .board-screen--demo-next-important .board-hud__next-reason {
+    font-size: 0.86rem;
+    line-height: 1.25;
+  }
+
+  /* Hide MoveBar during HUD-section steps so coach + strip fit */
+  .board-screen--demo-magnets .movebar,
+  .board-screen--demo-next-important .movebar,
+  .board-screen--demo-goals .movebar,
+  .board-screen--demo-zones .movebar,
+  .board-screen--demo-counts .movebar {
+    display: none;
+  }
+
+  body:has(.demo-overlay:not(.demo-overlay--done)) .demo-coach {
+    max-height: min(32vh, 150px);
+  }
 }

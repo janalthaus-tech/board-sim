@@ -241,21 +241,22 @@ function measure(target: DemoTarget, el: Element | null): SpotlightRect | null {
     if (hud) return rectFromEl(hud, 8);
   }
   if (target === 'waiter' && el) {
-    // Ring the timer chip; if tiny, include the markers row for context
-    const timer =
-      el.matches?.('[data-demo="waiter"], .card__timer')
-        ? el
-        : el.querySelector?.('[data-demo="waiter"], .card__timer');
+    // Prefer markers row (W magnet + countdown) so the ring is reliable on phones
+    const selectedCard = document.querySelector('.card--selected');
     const markers =
-      (timer as Element | null)?.closest?.('.card__markers') ??
-      el.closest?.('.card__markers') ??
-      el;
-    const focus = (timer as Element | null) ?? markers;
-    const r = rectFromEl(focus, 10);
-    if (r && r.width < 48 && markers && markers !== focus) {
-      return rectFromEl(markers, 8) ?? r;
-    }
-    return r;
+      selectedCard?.querySelector('[data-demo="waiter-markers"]') ??
+      selectedCard?.querySelector('.card__markers') ??
+      (el as Element).closest?.('.card__markers') ??
+      null;
+    const timer =
+      selectedCard?.querySelector('[data-demo="waiter"]') ??
+      selectedCard?.querySelector('.card__timer') ??
+      (el.matches?.('[data-demo="waiter"], .card__timer') ? el : null) ??
+      el.querySelector?.('[data-demo="waiter"], .card__timer');
+    if (markers && timer) return rectFromEl(markers, 10);
+    if (timer) return rectFromEl(timer as Element, 12);
+    if (markers) return rectFromEl(markers, 10);
+    return rectFromEl(el, 10);
   }
   if (target === 'job-detail') {
     const status = document.querySelector('[data-demo="repair-status"]');
@@ -284,7 +285,19 @@ function measure(target: DemoTarget, el: Element | null): SpotlightRect | null {
 }
 
 /** Place coach in the larger free band that does not cover the spotlight. */
-function placeCoach(spot: SpotlightRect | null): {
+const HUD_SECTION_TARGETS = new Set<DemoTarget>([
+  'zones',
+  'magnets',
+  'counts',
+  'goals',
+  'next-important',
+]);
+
+/** Place coach in the larger free band that does not cover the spotlight. */
+function placeCoach(
+  spot: SpotlightRect | null,
+  target?: DemoTarget | null,
+): {
   top: boolean;
   maxHeight: number;
 } {
@@ -293,10 +306,21 @@ function placeCoach(spot: SpotlightRect | null): {
     '(orientation: landscape) and (max-height: 520px)',
   ).matches;
   const phone = window.matchMedia('(max-width: 900px)').matches;
-  const minCoach = landscape ? 120 : phone ? 160 : 180;
+  const minCoach = landscape ? 96 : phone ? 160 : 180;
   const idealCoach = landscape
-    ? Math.min(vh * 0.48, 200)
+    ? Math.min(vh * 0.32, 150)
     : Math.min(vh * 0.4, 300);
+
+  // Landscape + HUD strip under topbar: always park coach at the bottom
+  // so the focused strip stays visible (landscape CSS also un-hides it).
+  if (landscape && target && HUD_SECTION_TARGETS.has(target)) {
+    const spotBottom = spot ? spot.top + spot.height : 0;
+    const spaceBelow = Math.max(96, vh - spotBottom - COACH_GAP);
+    return {
+      top: false,
+      maxHeight: Math.min(idealCoach, spaceBelow),
+    };
+  }
 
   if (!spot) {
     return { top: false, maxHeight: idealCoach };
@@ -307,12 +331,10 @@ function placeCoach(spot: SpotlightRect | null): {
   const spaceAbove = Math.max(0, spotTop - COACH_GAP);
   const spaceBelow = Math.max(0, vh - spotBottom - COACH_GAP);
 
-  // Prefer a side that fully fits a usable coach without covering the ring
   const aboveOk = spaceAbove >= minCoach;
   const belowOk = spaceBelow >= minCoach;
 
   if (aboveOk && belowOk) {
-    // Prefer the roomier side
     if (spaceAbove >= spaceBelow) {
       return { top: true, maxHeight: Math.min(idealCoach, spaceAbove) };
     }
@@ -325,16 +347,15 @@ function placeCoach(spot: SpotlightRect | null): {
     return { top: false, maxHeight: Math.min(idealCoach, spaceBelow) };
   }
 
-  // Neither side fits well (tall spotlight) — pick the larger gap and shrink
   if (spaceAbove >= spaceBelow) {
     return {
       top: true,
-      maxHeight: Math.max(100, Math.min(idealCoach, spaceAbove || vh * 0.28)),
+      maxHeight: Math.max(88, Math.min(idealCoach, spaceAbove || vh * 0.28)),
     };
   }
   return {
     top: false,
-    maxHeight: Math.max(100, Math.min(idealCoach, spaceBelow || vh * 0.28)),
+    maxHeight: Math.max(88, Math.min(idealCoach, spaceBelow || vh * 0.28)),
   };
 }
 
@@ -342,12 +363,13 @@ function scrollTargetIntoSafeZone(
   el: Element | null,
   coachTop: boolean,
   coachMaxH: number,
+  opts?: { center?: boolean },
 ) {
   if (!el || !('scrollIntoView' in el)) return;
   try {
     (el as HTMLElement).scrollIntoView({
-      block: 'nearest',
-      inline: 'nearest',
+      block: opts?.center ? 'center' : 'nearest',
+      inline: opts?.center ? 'center' : 'nearest',
       behavior: 'smooth',
     });
   } catch {
@@ -408,7 +430,7 @@ export function DecisionDemo({
 
   const placement = useMemo(() => {
     void placementTick;
-    return placeCoach(spot);
+    return placeCoach(spot, current?.target);
   }, [spot, placementTick]);
 
   const coachTop = placement.top;
@@ -465,7 +487,7 @@ export function DecisionDemo({
       setSpot(next);
       setPlacementTick((n) => n + 1);
 
-      const place = placeCoach(next);
+      const place = placeCoach(next, current.target);
       const scrollEl =
         current.target === 'waiter'
           ? (document.querySelector('.card--selected') ??
@@ -481,7 +503,12 @@ export function DecisionDemo({
                 ? (document.querySelector('[data-demo="column-header"]') ?? el)
                 : el;
 
-      scrollTargetIntoSafeZone(scrollEl, place.top, place.maxHeight);
+      scrollTargetIntoSafeZone(scrollEl, place.top, place.maxHeight, {
+        center:
+          current.target === 'waiter' ||
+          current.target === 'columns' ||
+          current.target === 'repair-chips',
+      });
     };
 
     update();
