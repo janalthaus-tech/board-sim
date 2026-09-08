@@ -37,7 +37,7 @@ body,
 #root {
   margin: 0;
   min-height: 100%;
-  min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
 }
 
 body {
@@ -329,9 +329,13 @@ p {
 .board-screen {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  min-height: 100dvh;
-  max-height: 100dvh;
+  position: fixed;
+  top: var(--app-top, 0px);
+  left: 0;
+  right: 0;
+  height: var(--app-height, 100dvh);
+  min-height: var(--app-height, 100dvh);
+  max-height: var(--app-height, 100dvh);
   overflow: hidden;
 }
 
@@ -1770,8 +1774,8 @@ p {
  */
 @media (orientation: landscape) and (max-height: 920px) {
   .board-screen {
-    height: 100dvh;
-    max-height: 100dvh;
+    height: var(--app-height, 100dvh);
+    max-height: var(--app-height, 100dvh);
   }
 
   .topbar {

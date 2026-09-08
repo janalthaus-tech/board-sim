@@ -12,7 +12,7 @@ export const PACE_OPTIONS: {
   {
     id: 'easy',
     label: 'Easy',
-    blurb: 'More real time per sim minute; chaos arrives later',
+    blurb: 'Much more real time per sim minute; chaos arrives later',
   },
   {
     id: 'standard',
@@ -73,13 +73,14 @@ export function applyPace(scenario: Scenario, pace: PaceId): Scenario {
     const events: ScenarioEvent[] = scenario.events.map((e) => ({
       ...e,
       // Stretch event timing so pressure arrives later
-      atSimMin: Math.round(e.atSimMin * 1.2),
+      atSimMin: Math.round(e.atSimMin * 1.35),
     }));
     return {
       ...scenario,
-      realSecondsPerSimMin: scenario.realSecondsPerSimMin * 1.75,
-      durationMin: Math.round(scenario.durationMin * 1.1),
-      answerWindowScale: 1.5,
+      // ~2.75× authored real-seconds/sim-min (was 1.75×) so Easy+0.5× has room to think
+      realSecondsPerSimMin: scenario.realSecondsPerSimMin * 2.75,
+      durationMin: Math.round(scenario.durationMin * 1.25),
+      answerWindowScale: 1.75,
       events,
       seedJobs: scenario.seedJobs.map((j) => ({ ...j })),
     };
@@ -95,6 +96,6 @@ export function applyPace(scenario: Scenario, pace: PaceId): Scenario {
   };
 }
 
-export type SpeedMul = 0.5 | 1 | 1.5;
+export type SpeedMul = 0.25 | 0.5 | 1 | 1.5;
 
-export const SPEED_MUL_OPTIONS: SpeedMul[] = [0.5, 1, 1.5];
+export const SPEED_MUL_OPTIONS: SpeedMul[] = [0.25, 0.5, 1, 1.5];

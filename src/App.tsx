@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useVisualViewportHeight } from './useVisualViewportHeight';
 import { BoardView } from './components/BoardView';
 import { DecisionDemo, type DemoTarget } from './components/DecisionDemo';
 import { Debrief } from './components/Debrief';
@@ -38,6 +39,7 @@ const DEMO_TOAST =
   'Demo event: Walk-in waiting in lobby — check Dispatch and the earliest W timer.';
 
 export default function App() {
+  useVisualViewportHeight();
   const [screen, setScreen] = useState<AppScreen>('home');
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [engine, setEngine] = useState<EngineSnapshot | null>(null);

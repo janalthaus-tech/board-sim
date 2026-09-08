@@ -100,7 +100,7 @@ const STEPS: DemoStep[] = [
   {
     target: 'speed',
     title: 'Pace with 0.5× while learning',
-    body: 'Easy pace buys thinking room. Use the 0.5× / 1× / 1.5× control in the top bar while learning indicators — turn speed back up once the HUD feels automatic.',
+    body: 'Easy pace buys thinking room. Use the 0.25× / 0.5× / 1× / 1.5× control in the top bar while learning indicators — turn speed back up once the HUD feels automatic.',
   },
 ];
 
