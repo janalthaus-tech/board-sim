@@ -1764,6 +1764,227 @@ p {
   }
 }
 
+/*
+ * Landscape board priority (phones + tablets up to ~iPad short landscape).
+ * Goal: at least one full card visible in a column. Portrait stays unchanged.
+ */
+@media (orientation: landscape) and (max-height: 920px) {
+  .board-screen {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  .topbar {
+    flex-wrap: nowrap;
+    gap: 0.25rem 0.4rem;
+    padding: 0.18rem 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .topbar__titles .eyebrow,
+  .topbar__clock .clock__meta,
+  .topbar__clock .clock__bar,
+  .role-badge {
+    display: none;
+  }
+
+  .topbar__title {
+    font-size: 0.8rem;
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .clock__time {
+    font-size: 0.88rem;
+  }
+
+  .topbar__actions .btn--sm,
+  .btn--help {
+    min-height: 28px;
+    min-width: 28px;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  .topbar__actions .speed-seg__btn {
+    min-height: 28px;
+    padding: 0.15rem 0.35rem;
+    font-size: 0.7rem;
+  }
+
+  /* Compact HUD only — never let expanded stats steal board height */
+  .board-hud:not(.board-hud--compact):not(.board-hud--demo-focus) {
+    display: none;
+  }
+
+  .board-hud--compact {
+    flex-shrink: 0;
+    padding: 0.18rem 0.45rem;
+    gap: 0.25rem;
+  }
+
+  .board-hud__next-reason--compact {
+    font-size: 0.78rem;
+    line-height: 1.2;
+    -webkit-line-clamp: 1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .board-hud--goals,
+  .board-hud--coach,
+  .board-hud__legend {
+    display: none;
+  }
+
+  .board-screen--demo .board-hud--demo-focus,
+  .board-screen--demo .board-hud--demo-focus.board-hud--goals,
+  .board-screen--demo .board-hud--demo-focus.board-hud--coach,
+  .board-screen--demo .board-hud--demo-focus .board-hud__legend {
+    display: flex !important;
+  }
+
+  .toast {
+    flex-shrink: 0;
+    max-height: 1.6rem;
+    margin: 0.1rem 0.4rem 0;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.75rem;
+  }
+
+  .board-main {
+    flex: 1 1 auto;
+    min-height: 9.5rem;
+    overflow: hidden;
+  }
+
+  .board {
+    flex: 1 1 auto;
+    min-height: 9rem;
+    padding: 0.25rem 0.4rem;
+    gap: 0.4rem;
+  }
+
+  .column {
+    flex: 0 0 min(200px, 46vw);
+    max-height: 100%;
+    min-height: 0;
+  }
+
+  .column__header {
+    padding: 0.3rem 0.45rem;
+  }
+
+  .column__header h2 {
+    font-size: 0.78rem;
+  }
+
+  .column__zone {
+    display: none;
+  }
+
+  .column__body {
+    padding: 0.3rem;
+    gap: 0.3rem;
+  }
+
+  .card {
+    padding: 0.4rem 0.45rem;
+  }
+
+  .card__customer {
+    font-size: 0.82rem;
+  }
+
+  .card__vehicle {
+    font-size: 0.72rem;
+  }
+
+  .card__concern {
+    font-size: 0.72rem;
+    margin-bottom: 0.25rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .card__repair-chips {
+    margin: 0.2rem 0 0.15rem;
+  }
+
+  /* MoveBar: one tight row so board keeps height */
+  .movebar {
+    flex-shrink: 0;
+    padding: 0.3rem 0.5rem;
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
+    gap: 0.25rem;
+  }
+
+  .movebar__info {
+    display: none;
+  }
+
+  .movebar__actions {
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    overflow-x: auto;
+  }
+
+  .movebar__actions .btn--sm {
+    min-height: 32px;
+    font-size: 0.72rem;
+    padding: 0.25rem 0.45rem;
+  }
+
+  .movebar--hint {
+    padding-top: 0.3rem;
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .movebar__hint {
+    font-size: 0.78rem;
+    margin: 0;
+  }
+
+  /*
+   * Detail open: side-by-side in landscape so the board is not crushed
+   * under an in-flow sheet (portrait keeps stacked layout).
+   */
+  .board-main--with-detail {
+    flex-direction: row !important;
+    align-items: stretch;
+    min-height: 9.5rem;
+  }
+
+  .board-main--with-detail .board {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 9rem;
+    max-height: none;
+  }
+
+  .board-main--with-detail .job-detail {
+    flex: 0 0 min(260px, 36vw);
+    width: min(260px, 36vw);
+    max-width: 40vw;
+    max-height: none;
+    min-height: 0;
+    height: auto;
+    overflow: auto;
+    border-left: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0;
+  }
+
+  .board-screen--detail-open .card__concern {
+    -webkit-line-clamp: 1;
+  }
+}
+
 
 /* Home CTA row (tutorial + decision demo) */
 .home__cta-row {
@@ -2267,13 +2488,7 @@ body:has(.demo-overlay:not(.demo-overlay--done)) .demo-coach {
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
-  .board-main--with-detail .job-detail {
-    max-height: min(32vh, 200px);
-  }
-
-  .board-main--with-detail .board {
-    min-height: 7.5rem;
-  }
+  /* Superseded by the max-height: 920px landscape board-priority block above */
 }
 
 body:has(.demo-overlay:not(.demo-overlay--done)) .job-detail {
@@ -2623,7 +2838,7 @@ body:has(.demo-overlay:not(.demo-overlay--done)) .job-detail {
 }
 
 /* Landscape demo: keep focused HUD strips visible under a slim topbar */
-@media (orientation: landscape) and (max-height: 520px) {
+@media (orientation: landscape) and (max-height: 920px) {
   .board-screen--demo .topbar__titles .eyebrow,
   .board-screen--demo .role-badge,
   .board-screen--demo .topbar__actions .btn--help,

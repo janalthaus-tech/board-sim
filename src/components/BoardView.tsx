@@ -180,12 +180,15 @@ export function BoardView({
   const gsph =
     flagTotal > 0 ? Math.round(gpProg.current / flagTotal) : null;
 
-  const compactHudMode = useMediaQuery(
-    '(max-width: 900px), (max-height: 500px)',
+  // Landscape phones + tablets: keep HUD compact so the board can show ≥1 full card.
+  const landscapeBoardPriority = useMediaQuery(
+    '(orientation: landscape) and (max-height: 920px)',
   );
-  const landscapeShort = useMediaQuery(
-    '(orientation: landscape) and (max-height: 500px)',
-  );
+  const compactHudMode =
+    useMediaQuery('(max-width: 900px), (max-height: 500px)') ||
+    landscapeBoardPriority;
+  // Alias used to hide "Stats" expand in landscape (full HUD steals board height)
+  const landscapeShort = landscapeBoardPriority;
   const [hudExpanded, setHudExpanded] = useState(false);
 
   const demoSectionFocus =
