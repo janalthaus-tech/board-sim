@@ -153,6 +153,18 @@ export function vehicleLabel(job: Pick<VehicleJob, 'year' | 'make' | 'model'>): 
   return `${job.year} ${job.make} ${job.model}`;
 }
 
+
+const DEFAULT_SHOP_TECHS = ['Derek', 'Nina', 'Kai', 'Sam'] as const;
+
+/** Union of techs already on jobs plus shop defaults (sorted unique). */
+export function shopTechRoster(board: BoardState): string[] {
+  const set = new Set<string>(DEFAULT_SHOP_TECHS);
+  for (const j of board.jobs) {
+    if (j.tech) set.add(j.tech);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
 export function assignBayTech(
   state: BoardState,
   jobId: string,

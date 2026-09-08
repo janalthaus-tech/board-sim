@@ -655,6 +655,39 @@ p {
   overflow-x: auto;
 }
 
+.movebar__tech {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 8px;
+  background: #151c2b;
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.movebar__tech-label {
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--accent-2);
+}
+
+.movebar__tech select {
+  appearance: auto;
+  background: #0e1420;
+  color: var(--text, #e8eefc);
+  border: 1px solid #2a3548;
+  border-radius: 6px;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  max-width: 7.5rem;
+  cursor: pointer;
+}
+
+
 /* Debrief */
 .debrief {
   max-width: 800px;

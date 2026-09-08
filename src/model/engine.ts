@@ -356,6 +356,7 @@ export function columnJobCounts(
   return counts;
 }
 
+/** Flow bottleneck among Dispatch→QC only. Final is completion, not a pile to empty. */
 export function bottleneckColumn(
   board: BoardState,
 ): BoardColumnId | null {
@@ -363,12 +364,13 @@ export function bottleneckColumn(
   let max = 0;
   let col: BoardColumnId | null = null;
   for (const c of BOARD_COLUMNS) {
+    if (c === 'final') continue;
     if (counts[c] > max) {
       max = counts[c];
       col = c;
     }
   }
-  return max > 0 ? col : null;
+  return max >= 2 ? col : null;
 }
 
 export interface HoursByTech {
@@ -809,6 +811,23 @@ export function computeDebrief(
         ' on time, ' +
         answersLate +
         ' late. Closing ratio dies with delay — protect the speed zone first.',
+    );
+  }
+
+  const finalNoTech = board.jobs.filter(
+    (j) =>
+      j.column === 'final' &&
+      (j.soldHours ?? 0) > 0 &&
+      !j.tech,
+  ).length;
+  const flagWeak =
+    techHours.length === 0 ||
+    techHours.every((t) => t.hours < goalHours * 0.5);
+  const gpSoft = gpProg.target > 0 && gpProg.ratio < 0.75;
+  if (finalNoTech >= 2 && (flagWeak || gpSoft || techHours.length === 0)) {
+    notes.push(
+      finalNoTech +
+        ' Final car(s) have sold hours but no tech — Final completes cars, yet flag hours need Assign tech on the MoveBar. GP$ still counts sold hours in sold columns regardless of tech.',
     );
   }
 

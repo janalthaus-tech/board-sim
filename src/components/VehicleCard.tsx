@@ -181,19 +181,23 @@ export function VehicleCard({
 interface MoveBarProps {
   job: VehicleJob | undefined;
   role?: RoleId;
+  techOptions: string[];
   onMove: (column: BoardColumnId) => void;
   onClearSelection: () => void;
   onClearBlocker: () => void;
   onAnswerDelivered?: () => void;
+  onAssignTech?: (tech: string | undefined) => void;
 }
 
 export function MoveBar({
   job,
   role = 'full',
+  techOptions,
   onMove,
   onClearSelection,
   onClearBlocker,
   onAnswerDelivered,
+  onAssignTech,
 }: MoveBarProps) {
   if (!job) {
     return (
@@ -256,6 +260,26 @@ export function MoveBar({
           >
             Answer delivered
           </button>
+        )}
+        {onAssignTech && (
+          <label className="movebar__tech">
+            <span className="movebar__tech-label">Assign tech</span>
+            <select
+              aria-label="Assign tech"
+              value={job.tech ?? ''}
+              onChange={(e) => {
+                const v = e.target.value;
+                onAssignTech(v === '' ? undefined : v);
+              }}
+            >
+              <option value="">No tech</option>
+              {techOptions.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
         {job.flags.includes('blocked') && (
           <button type="button" className="btn btn--sm btn--warn" onClick={onClearBlocker}>

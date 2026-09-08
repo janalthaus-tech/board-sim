@@ -9,6 +9,7 @@ import {
   applyPace,
   approveAllPending,
   approveLine,
+  assignBayTech,
   clearFlag,
   computeDebrief,
   getScenario,
@@ -270,6 +271,22 @@ export default function App() {
     });
   };
 
+  const onAssignTech = (jobId: string, tech: string | undefined) => {
+    setEngine((prev) => {
+      if (!prev) return prev;
+      const job = prev.board.jobs.find((j) => j.id === jobId);
+      if (!job) return prev;
+      const board = assignBayTech(prev.board, jobId, job.bay, tech);
+      return {
+        ...prev,
+        board,
+        toast: tech
+          ? `Assigned ${tech} — sold hours now bank toward flag hrs.`
+          : 'Tech cleared — flag hours need a tech on the card.',
+      };
+    });
+  };
+
   const onMarkInspectionComplete = (jobId: string) => {
     setEngine((prev) => {
       if (!prev) return prev;
@@ -390,6 +407,7 @@ export default function App() {
           onMove={onMove}
           onClearBlocker={onClearBlocker}
           onAnswerDelivered={onAnswerDelivered}
+          onAssignTech={onAssignTech}
           onMarkInspectionComplete={onMarkInspectionComplete}
           onApproveAllPending={onApproveAllPending}
           onApproveLine={onApproveLine}

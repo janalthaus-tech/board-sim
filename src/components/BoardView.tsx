@@ -23,6 +23,7 @@ import {
   partsWipHours,
   roleCoachCue,
   roleShortLabel,
+  shopTechRoster,
   techHoursProgress,
   totalFlagHours,
 } from '../model';
@@ -44,6 +45,7 @@ interface Props {
   onMove: (jobId: string, column: BoardColumnId) => void;
   onClearBlocker: (jobId: string) => void;
   onAnswerDelivered: (jobId: string) => void;
+  onAssignTech: (jobId: string, tech: string | undefined) => void;
   onMarkInspectionComplete: (jobId: string) => void;
   onApproveAllPending: (jobId: string) => void;
   onApproveLine: (jobId: string, lineId: string) => void;
@@ -104,6 +106,7 @@ export function BoardView({
   onMove,
   onClearBlocker,
   onAnswerDelivered,
+  onAssignTech,
   onMarkInspectionComplete,
   onApproveAllPending,
   onApproveLine,
@@ -781,6 +784,7 @@ export function BoardView({
       <MoveBar
         job={selected}
         role={role}
+        techOptions={shopTechRoster(board)}
         onMove={(col) => {
           if (selected) onMove(selected.id, col);
         }}
@@ -790,6 +794,9 @@ export function BoardView({
         }}
         onAnswerDelivered={() => {
           if (selected) onAnswerDelivered(selected.id);
+        }}
+        onAssignTech={(tech) => {
+          if (selected) onAssignTech(selected.id, tech);
         }}
       />
     </div>

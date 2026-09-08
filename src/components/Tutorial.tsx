@@ -29,7 +29,15 @@ const STEPS = [
   },
   {
     title: 'Goals: flag hours, then GP$ sold',
-    body: 'Flat rate: techs earn on flag (billed/sold) hours, not clock time. Empty sections and sell work to feed flag hours. Aim ~8 flag hrs/tech as the day baseline, then chase GP$ sold for the shop.',
+    body: 'Flat rate: techs earn on flag (billed/sold) hours, not clock time. Sell work into Parts/WIP/QC/Final (or mark Answer delivered) to feed the shop’s GP$ sold. Aim ~8 flag hrs/tech as the day baseline — then chase GP$ sold. Flag hours only bank when a tech is assigned on the card.',
+  },
+  {
+    title: 'Assign a tech to bank flag hours',
+    body: 'Sold hours on a card only feed flag hrs when a tech is on that card. Select a job and use Assign tech on the MoveBar (No tech clears it). Final does not invent a tech — pile cars in Final without assigning and flag hours stay soft.',
+  },
+  {
+    title: 'Final ≠ automatic day goals',
+    body: 'Final means the car is complete — not that day goals are done. GP$ comes from sold work in Parts/WIP/QC/Final or Answer delivered. Flag hrs need tech + sold hours. A big Final pile is success throughput, not a flow bottleneck to “empty” like Approval or Parts.',
   },
 ] as const;
 
