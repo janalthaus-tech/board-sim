@@ -3,6 +3,7 @@ import { useVisualViewportHeight } from './useVisualViewportHeight';
 import { BoardView } from './components/BoardView';
 import { DecisionDemo, type DemoTarget } from './components/DecisionDemo';
 import { Debrief } from './components/Debrief';
+import { FlowGuide } from './components/FlowGuide';
 import { Home, type StartOptions } from './components/Home';
 import { hasSeenTutorial, Tutorial } from './components/Tutorial';
 import {
@@ -39,9 +40,24 @@ const DEMO_SCENARIO_ID = 'morning-rush';
 const DEMO_TOAST =
   'Demo event: Walk-in waiting in lobby — check Dispatch and the earliest W timer.';
 
+function screenFromPath(): AppScreen {
+  if (typeof window === 'undefined') return 'home';
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  return path === '/flow' ? 'flow' : 'home';
+}
+
+function syncFlowPath(next: AppScreen) {
+  if (typeof window === 'undefined' || !window.history?.pushState) return;
+  const want = next === 'flow' ? '/flow' : '/';
+  const cur = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (cur !== want) {
+    window.history.pushState({ screen: next }, '', want);
+  }
+}
+
 export default function App() {
   useVisualViewportHeight();
-  const [screen, setScreen] = useState<AppScreen>('home');
+  const [screen, setScreen] = useState<AppScreen>(() => screenFromPath());
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [engine, setEngine] = useState<EngineSnapshot | null>(null);
   const [running, setRunning] = useState(false);
@@ -68,6 +84,39 @@ export default function App() {
   scenarioRef.current = scenario;
   runningRef.current = running;
   speedMulRef.current = speedMul;
+
+  useEffect(() => {
+    const onPop = () => {
+      const next = screenFromPath();
+      setScreen(next);
+      if (next === 'home') {
+        setRunning(false);
+        setScenario(null);
+        setEngine(null);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const goHome = useCallback(() => {
+    setRunning(false);
+    setDemoOpen(false);
+    setDemoFocus(null);
+    setScenario(null);
+    setEngine(null);
+    setSelectedId(null);
+    setScreen('home');
+    syncFlowPath('home');
+  }, []);
+
+  const openFlow = useCallback(() => {
+    setRunning(false);
+    setTutorialOpen(false);
+    setDemoOpen(false);
+    setScreen('flow');
+    syncFlowPath('flow');
+  }, []);
 
   const finish = useCallback(() => {
     const sc = scenarioRef.current;
@@ -357,8 +406,18 @@ export default function App() {
     });
   };
 
+  if (screen === 'flow') {
+    return <FlowGuide onHome={goHome} />;
+  }
+
   if (screen === 'home') {
-    return <Home onStart={begin} onWatchDemo={beginDecisionDemo} />;
+    return (
+      <Home
+        onStart={begin}
+        onWatchDemo={beginDecisionDemo}
+        onOpenFlow={openFlow}
+      />
+    );
   }
 
   if (screen === 'debrief' && scenario && stats && engine) {
@@ -452,5 +511,11 @@ export default function App() {
     );
   }
 
-  return <Home onStart={begin} onWatchDemo={beginDecisionDemo} />;
+  return (
+      <Home
+        onStart={begin}
+        onWatchDemo={beginDecisionDemo}
+        onOpenFlow={openFlow}
+      />
+    );
 }

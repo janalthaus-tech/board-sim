@@ -39,6 +39,22 @@ const STEPS = [
     title: 'Final ≠ automatic day goals',
     body: 'Final means the car is complete — not that day goals are done. GP$ comes from sold work in Parts/WIP/QC/Final or Answer delivered. Flag hrs need tech + sold hours. A big Final pile is success throughput, not a flow bottleneck to “empty” like Approval or Parts.',
   },
+  {
+    title: 'Optimize flow with the board',
+    body: 'Protect the speed zone (Dispatch→Inspection→Answer, ~1-hour answers). Play next-most-important: earliest stuck / oldest waiter first. Empty bottleneck sections — Final is the finish line, not a pile to clear. Sell, assign a tech, then produce (flag hrs + GP$). Use magnets and a daily production meeting for what goes today.',
+  },
+  {
+    title: 'Kanban on The Board',
+    body: 'Treat columns like a kanban system: set WIP limits, pull work when capacity frees (don’t push into jammed bays), keep blockers and waiters visual, and watch cycle time per column so long-dwell piles become your next fix.',
+  },
+  {
+    title: 'Toyota Way habits',
+    body: 'Prefer flow over batching. Practice jidoka — QC fail sends work back (e.g. toward Approval/rework). Keep standard work (same columns, magnets, meeting rhythm), level the load (heijunka), and use debrief as kaizen after every sim and every real day.',
+  },
+  {
+    title: 'What improves when it sticks',
+    body: 'Faster answers and closes, more flag hours with steadier GP$, less WIP chaos and shorter cycles, clearer roles, and real capacity to scale. Board Sim is the practice gym before you put live WIP limits on the shop floor.',
+  },
 ] as const;
 
 interface Props {

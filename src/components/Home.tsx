@@ -24,9 +24,10 @@ export interface StartOptions {
 interface Props {
   onStart: (scenarioId: string, options: StartOptions) => void;
   onWatchDemo?: (options: StartOptions) => void;
+  onOpenFlow?: () => void;
 }
 
-export function Home({ onStart, onWatchDemo }: Props) {
+export function Home({ onStart, onWatchDemo, onOpenFlow }: Props) {
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [pace, setPace] = useState<PaceId>(() => loadPace());
   const [repairDetail, setRepairDetail] = useState(() =>
@@ -78,6 +79,15 @@ export function Home({ onStart, onWatchDemo }: Props) {
           >
             How The Board works
           </button>
+          {onOpenFlow && (
+            <button
+              type="button"
+              className="btn btn--ghost home__tutorial-btn"
+              onClick={onOpenFlow}
+            >
+              Flow guide
+            </button>
+          )}
           {onWatchDemo && (
             <button
               type="button"

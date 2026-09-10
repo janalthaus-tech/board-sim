@@ -234,7 +234,7 @@ export interface DebriefStats {
   }[];
 }
 
-export type AppScreen = 'home' | 'board' | 'debrief';
+export type AppScreen = 'home' | 'board' | 'debrief' | 'flow';
 
 export interface NextImportantHint {
   jobId: string | null;
